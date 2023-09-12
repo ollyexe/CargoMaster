@@ -12,3 +12,6 @@ $(EXECUTABLE): $(SOURCES)
 
 run : $(EXECUTABLE)
 	./$(EXECUTABLE)
+
+clean:
+	rm -f out/*.exe
