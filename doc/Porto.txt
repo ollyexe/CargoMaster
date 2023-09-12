@@ -1,0 +1,24 @@
+Porto
+	- nasce con delle coordinate(dooble)
+	- nasce con 1-SO_BANCHINE--->random
+	- nasce con un numero di tonnellare di domanda e offerta(SO_FILL) --->quantita iniziali nei porti caratteristiche domanda/offerta:
+		-tipo di merce(intero 1-n)
+		-quantità di merce
+
+	Features:
+		- Contatore:
+			• banchine libere-->forse
+			• merci disponibili
+			• merci caricate
+			• merci scaricate
+			• merci perdute
+
+
+		- non ci possono essere sia domanda che offerta della stessa merce in uno stesso porto
+		- esistono almeno 4<SO_PORTI porti in contemporanea (almeno 1 per ogni angolo della mappa)
+		- la nave che arriva chiede l'accesso al porto e viene deciso randomicamente(scelta implementativa)
+		se una nave ottiene l'accesso scarica o carica con quantita/SO_LOADSPEED dopo di cui il porto modifica la sua domanda e offerta
+	
+		- Banchine -->risorsa condivisa a cui gestire l'accesso condiviso con i semafori che impediscano l’utilizzo da parte di un numero di navi maggiore delle banchine presenti
+	
+	

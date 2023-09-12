@@ -1,0 +1,33 @@
+Contesto
+
+	Simulazione di un ambinete(mappa/mare) in cui navi e porti coesistono scmabiandosi merce.
+	Tipi di processi:
+		• un processo master incaricato di creare gli altri processi e gestire la simulazione, ove necessario;
+		• un numero SO_NAVI (≥ 1) di processi nave; e
+		• un numero SO_PORTI (≥ 4) di processi porto.
+
+	La simulazione termina se:
+		• dopo un tempo simulato di SO_DAYS
+		• quando per ogni tipo di merce
+			– l’offerta `e pari a zero oppure
+			– la richiesta `e pari a zero
+		
+	Il report finale deve indicare(metodo a se):
+		• Numero di navi ancora in mare con un carico a bordo
+		• Numero di navi ancora in mare senza un carico
+		• Numero di navi che occupano una banchina
+		• Totale delle merci suddivise per tipologia e stato (disponibile, consegnato, etc. Si veda la Sezione 5.1 per la
+		descrizione dello stato di una merce)
+		• Per ogni porto si indichi la quantit`a di merce
+			– presente, spedita, e ricevuta.
+
+		• Per ogni tipo di merce si indichi:
+			– la quantit`a totale generata dall’inizio della simulazione e quanta di essa
+				∗ `e rimasta ferma in porto
+				∗ `e scaduta in porto
+				∗ `e scaduta in nave
+				∗ `e stata consegnata da qualche nave.
+			– Si indichi il porto che
+				∗ ha offerto la quantit`a maggiore della merce
+				∗ e quello che ha richiesto la quantit`a maggiore di merce.
+		

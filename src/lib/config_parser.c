@@ -1,4 +1,4 @@
-#include "config_parser.h"
+#include "../include/config_parser.h"
 #include <stdio.h>
 #include <string.h>
 
@@ -10,7 +10,7 @@ int parseConfigFile(const char *filename, struct KeyValuePair *config, int max_e
     FILE *file = fopen(filename, "r");
     if (file == NULL) {
         perror("Failed to open file");
-        return -1; // Return an error code
+        return -1;
     }
 
     while (fgets(line, sizeof(line), file) != NULL && count < max_entries) {
@@ -28,5 +28,5 @@ int parseConfigFile(const char *filename, struct KeyValuePair *config, int max_e
     }
 
     fclose(file);
-    return count; // Return the number of key-value pairs parsed
+    return count;
 }

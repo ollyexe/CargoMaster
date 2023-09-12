@@ -1,7 +1,7 @@
 #ifndef CONFIG_PARSER_H
 #define CONFIG_PARSER_H
 
-#define MAX_LINE_LENGTH 256 // Define your buffer size here
+#define MAX_LINE_LENGTH 256
 
 struct KeyValuePair {
     char key[MAX_LINE_LENGTH];

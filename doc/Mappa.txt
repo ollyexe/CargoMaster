@@ -1,0 +1,5 @@
+Mappa
+	-LungaXLarga SO_LATO
+
+	Features:
+		-la navigazione avviene sempre in linea retta
