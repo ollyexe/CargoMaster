@@ -19,7 +19,7 @@ LIB_OBJS = $(patsubst $(LIB_DIR)/%.c,$(BIN_DIR)/%.o,$(LIB_SRCS))
 MAIN_OBJ = $(BIN_DIR)/main.o
 
 # Name of the final executable
-TARGET = myprogram
+TARGET = sea
 
 build: $(TARGET)
 
@@ -39,4 +39,4 @@ all: clean build run
 
 
 clean:
-	rm -rf $(BIN_DIR)/*.o $(BIN_DIR)/$(TARGET)
+	  $(if $(filter Windows%,$(OS)),del /Q $(BIN_DIR)\*.o $(BIN_DIR)\$(TARGET).exe,rm -rf $(BIN_DIR)/*.o $(BIN_DIR)/$(TARGET))

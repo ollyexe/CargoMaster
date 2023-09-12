@@ -1,0 +1,11 @@
+root/
+|
+|__/src
+   |_/include
+      config_p.h
+   |_/lib
+      config_p.c
+   main.c
+|__bin
+|__resources
+   config.properties
