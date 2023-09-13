@@ -1,6 +1,7 @@
 Nave
 	-nasce in coordinate sulla mappa randomiche(double)
-	-capacità (SO_CAPACITY)  -->nasce con capacità 
+	-nasce senza merce
+	-capacità (SO_CAPACITY)
 	-velocità (SO_SPEED)
 	-derivate:
 		* carico attuale -->	

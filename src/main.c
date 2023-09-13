@@ -2,31 +2,19 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/types.h>
+#include "include/Nave.h"
 
-#define MAX_LINE_LENGTH 256
 
 
 
 
 
 int main() {
-    pid_t pid;
-    pid = fork();
+    Nave nave = crea_nave();
 
-    if (pid == -1) {
-        perror("fork");
-        exit(EXIT_FAILURE);
-    }
+    stampa_nave(&nave);
 
-    if (pid == 0) {
-        /* Questo codice verrà eseguito nel processo figlio */
-        printf("Processo figlio è in esecuzione!\n");
-        exit(EXIT_SUCCESS);
-    } else {
-        /* Questo codice verrà eseguito nel processo padre */
-        printf("Processo padre è in esecuzione. PID del figlio: %d\n", pid);
-    }
-
+    printf("Coordinate:\n");
 
     return 0;
 }

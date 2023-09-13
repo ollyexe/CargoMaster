@@ -33,9 +33,8 @@ $(BIN_DIR)/%.o: $(LIB_DIR)/%.c
 $(MAIN_OBJ): $(MAIN_SRC)
 	$(CC) $(CFLAGS) -c $< -o $@
 
-run: $(TARGET)
+run:
 	./$(BIN_DIR)/$(TARGET)
-
 
 clean:
 	rm -rf $(BIN_DIR)/*.o $(BIN_DIR)/$(TARGET)
