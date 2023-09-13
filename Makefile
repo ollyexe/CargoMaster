@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -std=c89 -Wpedantic -Isrc/include -g
+CFLAGS = -std=c89 -Wpedantic -Isrc/include -g -D_GNU_SOURCE
 
 # Library flags
 LDFLAGS = -Lsrc/lib
@@ -20,6 +20,7 @@ MAIN_OBJ = $(BIN_DIR)/main.o
 
 # Name of the final executable
 TARGET = sea
+all: clean build run
 
 build: $(TARGET)
 
@@ -35,8 +36,6 @@ $(MAIN_OBJ): $(MAIN_SRC)
 run: $(TARGET)
 	./$(BIN_DIR)/$(TARGET)
 
-all: clean build run
-
 
 clean:
-	  $(if $(filter Windows%,$(OS)),del /Q $(BIN_DIR)\*.o $(BIN_DIR)\$(TARGET).exe,rm -rf $(BIN_DIR)/*.o $(BIN_DIR)/$(TARGET))
+	rm -rf $(BIN_DIR)/*.o $(BIN_DIR)/$(TARGET)
