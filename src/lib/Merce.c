@@ -12,7 +12,12 @@ Merce crea_merce() {
 }
 
 void scadi_merce(Merce *merce) {
-    merce->giorni_di_vita--;
+    if (merce->giorni_di_vita > 0) {
+        merce->giorni_di_vita--;
+    } else {
+        printf("Merce scaduta\n");
+    }
+
 }
 
 void stampa_merce(Merce merce) {

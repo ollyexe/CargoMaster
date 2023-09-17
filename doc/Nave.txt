@@ -18,3 +18,9 @@ Features:
 		+tipo e quantita di merce da scaricare(ANCORA NON SCADUTA)
 		+tipo e quantita di merce da caricare
 	-ogni nave sa tutte le info di un porto
+
+
+
+
+Assunzioni :
+    una nave scegliera come primo porto uno casuale

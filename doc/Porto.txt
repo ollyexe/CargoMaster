@@ -21,4 +21,6 @@ Porto
 	
 		- Banchine -->risorsa condivisa a cui gestire l'accesso condiviso con i semafori che impediscano l’utilizzo da parte di un numero di navi maggiore delle banchine presenti
 	
-	
+	Assunzioni:
+	    -ipotizzo che il porto carica solo la merce in offerta e scarica solo la merce in domanda
+         una volta che ha scaricato tutta la merce in domanda e caricato tutta la merce in offerta, il porto non ha più merce da scambiare e quindi non può più essere utilizzato

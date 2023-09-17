@@ -1,8 +1,7 @@
 /cmake-build-debug/
 /.idea
 *.exe
-/bin/*.o
-/bin/*.exe
+/bin/*
 # Prerequisites
 *.d
 

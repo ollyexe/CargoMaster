@@ -25,7 +25,7 @@ all: clean build run
 build: $(TARGET)
 
 $(TARGET): $(LIB_OBJS) $(MAIN_OBJ)
-	$(CC) $(CFLAGS) $(LDFLAGS) -o $(BIN_DIR)/$@ $^
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $(BIN_DIR)/$@ $^ -lm
 
 $(BIN_DIR)/%.o: $(LIB_DIR)/%.c
 	$(CC) $(CFLAGS) -c $< -o $@
