@@ -17,7 +17,6 @@ int main() {
     stampa_nave(&nave);
     sposta_nave(&nave, 10, 10);
     stampa_nave(&nave);
-    free_nave(&nave);
 
 
 
