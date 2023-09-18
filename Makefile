@@ -20,9 +20,8 @@ MAIN_OBJ = $(BIN_DIR)/main.o
 
 # Name of the final executable
 TARGET = sea
-all: clean build run
 
-build: $(TARGET)
+all: $(TARGET)
 
 $(TARGET): $(LIB_OBJS) $(MAIN_OBJ)
 	$(CC) $(CFLAGS) $(LDFLAGS) -o $(BIN_DIR)/$@ $^ -lm

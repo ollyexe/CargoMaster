@@ -4,7 +4,7 @@ typedef struct Merce {
     int quantita;
     int giorni_di_vita;
     int tipo;
-} Merce;
+}Merce;
 
 
 Merce crea_merce();

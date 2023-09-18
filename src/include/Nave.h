@@ -1,12 +1,6 @@
-
-
-
 #include "Merce.h"
 #include "../resources/born_to_run.h"
-struct Coordinate{
-    double longitudine;
-    double latitudine;
-};
+#include "../include/Util.h"
 
 struct Statistiche{
     int merci_disponibili;
@@ -15,20 +9,13 @@ struct Statistiche{
     int merci_perdute;
 };
 
-struct Tipo_merce{
-    struct Merce  lotti_merce[SO_MERCI]/*temporaneo*/  ;
-    int size;
-    int tipo;
-};
-struct Matrice_merce{
-    struct Tipo_merce tipi_merce[SO_MERCI];
-};
+
 
 typedef struct {
-    struct Coordinate coordinate;
+    Coordinate coordinate;
     int  capacita;
     double velocita;
-    struct Matrice_merce matrice_merce;
+    Matrice_merce matrice_merce;
     struct Statistiche statistiche;
 } Nave;
 
