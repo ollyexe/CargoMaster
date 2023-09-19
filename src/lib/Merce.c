@@ -3,11 +3,11 @@
 #include "../resources/born_to_run.h"
 #include "../include/Util.h"
 
-Merce crea_merce() {
+Merce crea_merce(int quantita,int tipo) {
     Merce merce;
-    merce.quantita = getRandomNumber(1,SO_SIZE);
+    merce.quantita = quantita;
     merce.giorni_di_vita = getRandomNumber(SO_MIN_VITA,SO_MAX_VITA);
-    merce.tipo = getRandomNumber(1,SO_MERCI);
+    merce.tipo = tipo;
     return merce;
 }
 

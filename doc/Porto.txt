@@ -13,12 +13,12 @@ Porto
 			• merci scaricate
 			• merci perdute
 
-
+        -a la domanda che l’offerta totale di tutte le merci presso tutti i porti sono pari a SO_FILL
 		- non ci possono essere sia domanda che offerta della stessa merce in uno stesso porto
 		- esistono almeno 4<SO_PORTI porti in contemporanea (almeno 1 per ogni angolo della mappa)
 		- la nave che arriva chiede l'accesso al porto e viene deciso randomicamente(scelta implementativa)
 		se una nave ottiene l'accesso scarica o carica con quantita/SO_LOADSPEED dopo di cui il porto modifica la sua domanda e offerta
-	
+
 		- Banchine -->risorsa condivisa a cui gestire l'accesso condiviso con i semafori che impediscano l’utilizzo da parte di un numero di navi maggiore delle banchine presenti
 	
 	Assunzioni:

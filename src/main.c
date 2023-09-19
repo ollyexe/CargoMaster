@@ -14,12 +14,10 @@
 
 
 int main() {
-
-    Nave nave = crea_nave();
-    stampa_nave(&nave);
-    sposta_nave(&nave, 10, 10);
-    stampa_nave(&nave);
-
+    Porto porto ;
+    srand(time(NULL));
+    porto = crea_porto();
+    printf("Porto creato\n");
 
 
     return 0;
