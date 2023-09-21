@@ -1,39 +1,61 @@
 CC = gcc
-CFLAGS = -std=c89 -Wpedantic -Isrc/include -g -D_GNU_SOURCE
-
-# Library flags
-LDFLAGS = -Lsrc/lib
+CFLAGS = -std=c89 -Wpedantic -Isrc/include -g -D_GNU_SOURCE -lm
 
 # Source directories
 SRC_DIR = src
 LIB_DIR = $(SRC_DIR)/lib
 INCLUDE_DIR = $(SRC_DIR)/include
 BIN_DIR = bin
+PROCESSI_DIR = $(BIN_DIR)/processi
 
 # List of source files
 LIB_SRCS = $(wildcard $(LIB_DIR)/*.c)
-MAIN_SRC = $(SRC_DIR)/main.c
+NAVE_SRC = $(SRC_DIR)/lib/Nave.c
+PORTO_SRC = $(SRC_DIR)/lib/Porto.c
+UTIL_SRC = $(SRC_DIR)/lib/Util.c
+MASTER_SRC = $(SRC_DIR)/Master.c
+MERCE_SRC = $(SRC_DIR)/lib/Merce.c
 
 # List of object files
-LIB_OBJS = $(patsubst $(LIB_DIR)/%.c,$(BIN_DIR)/%.o,$(LIB_SRCS))
-MAIN_OBJ = $(BIN_DIR)/main.o
+LIB_OBJS = $(patsybst $(LIB_DIR)/%.c,$(BIN_DIR)/%.o,$(LIB_SRCS))
+NAVE_OBJ = $(BIN_DIR)/Nave.o
+PORTO_OBJ = $(BIN_DIR)/Porto.o
+MASTER_OBJ = $(BIN_DIR)/Master.o
+UTIL_OBJ = $(BIN_DIR)/Util.o
+MERCE_OBJ = $(BIN_DIR)/Merce.o
 
-# Name of the final executable
-TARGET = sea
+# Names of the final executables
+NAVE_EXEC = $(PROCESSI_DIR)/nave
+PORTO_EXEC = $(PROCESSI_DIR)/porto
+MASTER_EXEC = $(PROCESSI_DIR)/master
 
-all: $(TARGET)
+all: $(NAVE_EXEC) $(PORTO_EXEC) $(MASTER_EXEC)
 
-$(TARGET): $(LIB_OBJS) $(MAIN_OBJ)
-	$(CC) $(CFLAGS) $(LDFLAGS) -o $(BIN_DIR)/$@ $^ -lm
 
 $(BIN_DIR)/%.o: $(LIB_DIR)/%.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
-$(MAIN_OBJ): $(MAIN_SRC)
+$(NAVE_OBJ): $(NAVE_SRC) $(UTIL_SRC)
 	$(CC) $(CFLAGS) -c $< -o $@
 
-run:
-	./$(BIN_DIR)/$(TARGET)
+$(PORTO_OBJ): $(PORTO_SRC) $(UTIL_SRC)
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(MASTER_OBJ): $(MASTER_SRC) $(UTIL_SRC)
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(NAVE_EXEC): $(LIB_OBJS) $(NAVE_OBJ) $(UTIL_OBJ)
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^ -lm
+
+$(PORTO_EXEC): $(LIB_OBJS) $(PORTO_OBJ) $(UTIL_OBJ) $(MERCE_OBJ)
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^ -lm
+
+$(MASTER_EXEC): $(LIB_OBJS) $(MASTER_OBJ) $(UTIL_OBJ)
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^ -lm
+
+run :
+	./$(MASTER_EXEC)
 
 clean:
-	rm -rf $(BIN_DIR)/*.o $(BIN_DIR)/$(TARGET)
+	rm -rf $(BIN_DIR)/*.o $(PROCESSI_DIR)/*
+

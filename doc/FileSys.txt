@@ -2,10 +2,17 @@ root/
 |
 |__/src
    |_/include
-      config_p.h
+      Merce.h
+      Nave.h
+      Porto.h
+      Util.h
    |_/lib
-      config_p.c
-   main.c
+        Merce.c
+        Nave.c
+        Porto.c
+        Util.c
+   Master.c
 |__bin
+    |_processi
 |__resources
    config.properties

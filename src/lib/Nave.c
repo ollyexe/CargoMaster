@@ -1,11 +1,14 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include "../include/Nave.h"
 #include "../include/Merce.h"
 #include "../resources/born_to_run.h"
 #include "../include/Util.h"
 #include <math.h>
 #include <time.h>
+#include <sys/ipc.h>
+#include <sys/shm.h>
 
 
 Nave  crea_nave() {
@@ -98,6 +101,20 @@ void sposta_nave(Nave *nave, double longitudine, double latitudine) {
 
 }
 
+
+int main() {
+
+    key_t portArrayKey;
+
+    portArrayKey = ftok(masterPath, 'p');
+    int shmid = shmget(portArrayKey, sizeof(int), IPC_CREAT | 0666);
+    int * shae = shmat(shmid, NULL, 0);
+    *shae = *shae+1;
+    printf("shae: %d\n", *shae);
+    printf("\n");
+    return 0;
+
+}
 
 
 

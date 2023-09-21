@@ -97,10 +97,22 @@ void genera_domanda(Mercato *mercato) {
 void crea_mercato(Mercato *mercato) {
     genera_merce(mercato);
     genera_domanda(mercato);
-
-
-
 }
+
+
+int main() {
+
+
+    printf("sono il porto \n");
+
+
+    return 0;
+}
+
+
+
+
+
 
 
 
