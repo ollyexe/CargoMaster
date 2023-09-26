@@ -4,11 +4,11 @@
 
 void seedRandom() {
     struct timespec ts;
+    unsigned long seed = ((unsigned long)ts.tv_sec * 1000000000) + ts.tv_nsec;
     if (clock_gettime(CLOCK_REALTIME, &ts) == -1) {
         perror("clock_gettime");
         exit(1);
     }
-    unsigned long long seed = ((unsigned long long)ts.tv_sec * 1000000000) + ts.tv_nsec;
     srand(seed);
 
 }

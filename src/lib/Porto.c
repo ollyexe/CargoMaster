@@ -6,6 +6,7 @@
 #include <time.h>
 #include <sys/ipc.h>
 #include <sys/shm.h>
+#include <sys/sem.h>
 
 
 Porto crea_porto() {
@@ -157,10 +158,27 @@ int * port_array_index_attach(){
 }
 
 
+
 int main() {
     int * index = port_array_index_attach();
     Porto *array = port_array_attach();
+    int semid;
+    struct sembuf sem_op;
+    semid = semget(IPC_PRIVATE, 1, IPC_CREAT | IPC_EXCL | 0666);
+    if (semid == -1) {
+            perror("semget");
+            exit(EXIT_FAILURE);
+    }
     seedRandom();
+
+    sem_op.sem_num = 0;
+    sem_op.sem_op = 0;
+    sem_op.sem_flg = 0;
+
+    if (semop(semid, &sem_op, 1) == -1) {
+        perror("semop");
+        exit(EXIT_FAILURE);
+    }
     switch (*index) {
         case 0:
             array[*index]=crea_porto_special(0,0);
@@ -177,9 +195,18 @@ int main() {
         default:
             array[*index] = crea_porto();
     }
+
+    printf("porto %d creato\n",*index);
     *index = *index +1;
+
+
     shmdt(index);
     shmdt(array);
+    sem_op.sem_op = 1;
+    if (semop(semid, &sem_op, 1) == -1) {
+        perror("semop");
+        exit(EXIT_FAILURE);
+    }
     return 0;
 }
 
