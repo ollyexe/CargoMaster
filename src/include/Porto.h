@@ -30,4 +30,6 @@ typedef struct {
 
 
 Porto crea_porto();
+Porto crea_porto_special(double longitudine, double latitudine);
 void crea_mercato(Mercato *mercato);
+void free_porto(Porto *porto);

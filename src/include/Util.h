@@ -18,7 +18,7 @@ typedef struct Coordinate{
 
 
 typedef struct Tipo_merce{
-    Merce lotti_merce[SO_MERCI]/*temporaneo*/  ;
+    Merce * lotti_merce  ;
     int size;
     int tipo;
 }Tipo_merce;
@@ -29,4 +29,6 @@ typedef struct Matrice_merce{
 
 int getRandomNumber(int lowerLimit, int upperLimit);
 double getRandomDouble(int lowerLimit, int upperLimit);
+void addMerce(Tipo_merce *tipo_merce, Merce merce);
+void seedRandom();
 #endif /* UTIL_H */

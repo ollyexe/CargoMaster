@@ -9,6 +9,7 @@
 #include <time.h>
 #include <sys/ipc.h>
 #include <sys/shm.h>
+#include <semaphore.h>
 
 
 Nave  crea_nave() {
@@ -104,14 +105,7 @@ void sposta_nave(Nave *nave, double longitudine, double latitudine) {
 
 int main() {
 
-    key_t portArrayKey;
-
-    portArrayKey = ftok(masterPath, 'p');
-    int shmid = shmget(portArrayKey, sizeof(int), IPC_CREAT | 0666);
-    int * shae = shmat(shmid, NULL, 0);
-    *shae = *shae+1;
-    printf("shae: %d\n", *shae);
-    printf("\n");
+    printf("sono la nave\n");
     return 0;
 
 }

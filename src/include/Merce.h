@@ -7,7 +7,7 @@ typedef struct Merce {
 }Merce;
 
 
-Merce crea_merce();
+Merce crea_merce(int quantita,int tipo);
 void scadi_merce(Merce *merce);
 void stampa_merce(Merce merce);
 #endif
