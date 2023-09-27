@@ -30,7 +30,7 @@ Porto crea_porto_special(double longitudine, double latitudine) {
     result.banchine_libere = getRandomNumber(1,SO_BANCHINE);
     result.statistiche.banchine_occupate = result.banchine_libere;
     result.statistiche.merci_caricate = 0;
-    result.statistiche.merci_disponibili = 0;
+    result.statistiche.merci_disponibili = SO_FILL/SO_PORTI;
     result.statistiche.merci_perdute = 0;
     result.statistiche.merci_scaricate = 0;
     crea_mercato(&result.mercato);
@@ -162,9 +162,8 @@ int * port_array_index_attach(){
 int main() {
     int * index = port_array_index_attach();
     Porto *array = port_array_attach();
-    int semid;
     struct sembuf sem_op;
-    semid = semget(IPC_PRIVATE, 1, IPC_CREAT | IPC_EXCL | 0666);
+    int semid = semget(IPC_PRIVATE, 1, IPC_CREAT | IPC_EXCL | 0666);
     if (semid == -1) {
             perror("semget");
             exit(EXIT_FAILURE);

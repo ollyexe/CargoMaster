@@ -75,10 +75,29 @@ int main() {
                 break;
         }
     }
+
     take_sem(semid);
     for (i=0;i<SO_PORTI;i++)
         printf("longit: %0.2f latid: %0.2f\n",portArray[i].coordinate.longitudine,portArray[i].coordinate.latitudine);
     release_sem(semid);
+
+    sleep(5);
+    for (i=0;i<SO_NAVI;i++){
+        pid_t pid = fork();
+        switch (pid){
+            case -1:
+                perror("fork");
+                exit(EXIT_FAILURE);
+            case 0:
+                execv(navePath,argv);
+                exit(EXIT_FAILURE);
+            default:
+                break;
+        }
+    }
+
+
+
 
     shmctl(portArrayIndexId, IPC_RMID, NULL);
     shmctl(portArraySMID, IPC_RMID, NULL);

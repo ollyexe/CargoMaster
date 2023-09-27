@@ -2,6 +2,7 @@
 #include "../resources/born_to_run.h"
 #include "../include/Util.h"
 
+
 struct Statistiche{
     int merci_disponibili;
     int merci_scaricate;
@@ -26,7 +27,6 @@ void init_matrice_merce(Nave *nave);
 void free_nave(Nave *nave);
 void carica_merce(Nave *nave, Merce merce);
 void scarica_merce(Nave *nave, int tipo_merce, int quantita);
-void sposta_nave(Nave *nave, double longitudine, double latitudine);
 
 
 

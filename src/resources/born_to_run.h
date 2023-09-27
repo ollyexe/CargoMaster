@@ -3,8 +3,8 @@
 #define CONFIG_H
 
 
-#define SO_NAVI 100
-#define SO_PORTI 100
+#define SO_NAVI 10
+#define SO_PORTI 10
 #define SO_MERCI 10
 #define SO_SIZE 100
 #define SO_MIN_VITA 3
