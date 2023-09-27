@@ -2,12 +2,12 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/types.h>
-#include <time.h>
 #include "include/Util.h"
 #include <sys/ipc.h>
 #include <sys/shm.h>
 #include "include/Porto.h"
 #include <sys/sem.h>
+
 
 
 void printStart(){
@@ -53,7 +53,7 @@ int main() {
         perror("semget");
         exit(EXIT_FAILURE);
     }
-
+    release_sem(semid);
 
     *portArrayIndex = 0;
     if (portArraySMID < 0) {
@@ -75,15 +75,14 @@ int main() {
                 break;
         }
     }
-    for (i=0;i<5;i++)
+    take_sem(semid);
+    for (i=0;i<SO_PORTI;i++)
         printf("longit: %0.2f latid: %0.2f\n",portArray[i].coordinate.longitudine,portArray[i].coordinate.latitudine);
+    release_sem(semid);
 
     shmctl(portArrayIndexId, IPC_RMID, NULL);
     shmctl(portArraySMID, IPC_RMID, NULL);
-    if (semctl(semid, 0, IPC_RMID) == -1) {
-        perror("semctl");
-        exit(EXIT_FAILURE);
-    }
+    destroy_sem(semid);
 
 
 

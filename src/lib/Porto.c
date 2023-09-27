@@ -137,7 +137,7 @@ void free_porto(Porto *porto){
 
 Porto * port_array_attach( ){
     key_t portArrayKey = ftok(masterPath, 'p');
-    int portArraySMID = shmget(portArrayKey, SO_PORTI* sizeof(Porto), IPC_CREAT | 0666);/*id della shared memory*/
+    int portArraySMID = shmget(portArrayKey, SO_PORTI* sizeof(Porto), IPC_EXCL | 0666);/*id della shared memory*/
     Porto * portArray = shmat(portArraySMID, NULL, 0);
     if (portArraySMID < 0) {
         perror("shmget");
@@ -148,7 +148,7 @@ Porto * port_array_attach( ){
 
 int * port_array_index_attach(){
     key_t portArrayIndexId= ftok(masterPath, 'i');
-    int portArrayIndexSHMID = shmget(portArrayIndexId,sizeof(int),IPC_CREAT | 0666);
+    int portArrayIndexSHMID = shmget(portArrayIndexId,sizeof(int),IPC_EXCL | 0666);
     int * portArrayIndex = shmat(portArrayIndexSHMID, NULL, 0);
     if (portArrayIndexSHMID < 0) {
         perror("shmget");
@@ -171,14 +171,9 @@ int main() {
     }
     seedRandom();
 
-    sem_op.sem_num = 0;
-    sem_op.sem_op = 0;
-    sem_op.sem_flg = 0;
+    printf("before : %d\n", semctl(semid, 0, GETVAL, 0));
+    take_sem(semid);
 
-    if (semop(semid, &sem_op, 1) == -1) {
-        perror("semop");
-        exit(EXIT_FAILURE);
-    }
     switch (*index) {
         case 0:
             array[*index]=crea_porto_special(0,0);
@@ -202,11 +197,8 @@ int main() {
 
     shmdt(index);
     shmdt(array);
-    sem_op.sem_op = 1;
-    if (semop(semid, &sem_op, 1) == -1) {
-        perror("semop");
-        exit(EXIT_FAILURE);
-    }
+    release_sem(semid);
+    printf("after : %d\n", semctl(semid, 0, GETVAL, 0));
     return 0;
 }
 

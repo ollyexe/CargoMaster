@@ -31,4 +31,7 @@ int getRandomNumber(int lowerLimit, int upperLimit);
 double getRandomDouble(int lowerLimit, int upperLimit);
 void addMerce(Tipo_merce *tipo_merce, Merce merce);
 void seedRandom();
+void take_sem(int sem_id);
+void release_sem(int sem_id);
+void destroy_sem(int sem_id);
 #endif /* UTIL_H */

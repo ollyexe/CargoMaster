@@ -1,5 +1,8 @@
 #include "../include/Util.h"
+#include <stdio.h>
 #include <stdlib.h>
+#include <sys/ipc.h>
+#include <sys/sem.h>
 #include <time.h>
 
 void seedRandom() {
@@ -32,7 +35,32 @@ double getRandomDouble(int lowerLimit, int upperLimit) {
 void addMerce(Tipo_merce *tipo_merce, Merce merce) {
     tipo_merce->lotti_merce = realloc(tipo_merce->lotti_merce, (tipo_merce->size) * sizeof(Merce));
     tipo_merce->lotti_merce[tipo_merce->size] = merce;
-    tipo_merce->size ++;
+    tipo_merce->size++;
 }
 
+
+void take_sem(int sem_id) {
+
+
+    if (semctl(sem_id,0,SETVAL,0) == -1) {
+        perror("semop");
+        exit(EXIT_FAILURE);
+    }
+}
+
+void release_sem(int sem_id) {
+    if (semctl(sem_id,0,SETVAL,1) == -1) {
+        perror("semop");
+        exit(EXIT_FAILURE);
+    }
+}
+
+
+void destroy_sem(int sem_id) {
+    if (semctl(sem_id, 0, IPC_RMID) == -1) {
+        perror("semctl");
+        exit(EXIT_FAILURE);
+    }
+
+}
 
