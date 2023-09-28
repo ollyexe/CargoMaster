@@ -4,8 +4,8 @@
 
 struct StatistichePorto{
     int merci_disponibili;
-    int merci_scaricate;
-    int merci_caricate;
+    int merci_ricevute;
+    int merci_spedite;
     int merci_perdute;
     int banchine_occupate;
 };
@@ -33,3 +33,5 @@ Porto crea_porto();
 Porto crea_porto_special(double longitudine, double latitudine);
 void crea_mercato(Mercato *mercato);
 void free_porto(Porto *porto);
+int get_tipi_di_merce_disponibili(Porto porto);
+void stampa_porto(Porto porto);

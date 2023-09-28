@@ -99,8 +99,8 @@ int main() {
 
 
 
-    shmctl(portArrayIndexId, IPC_RMID, NULL);
-    shmctl(portArraySMID, IPC_RMID, NULL);
+    /*shmctl(portArrayIndexId, IPC_RMID, NULL);
+    shmctl(portArraySMID, IPC_RMID, NULL);*/
     destroy_sem(semid);
 
 

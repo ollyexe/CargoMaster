@@ -24,3 +24,15 @@ Features:
 
 Assunzioni :
     una nave scegliera come primo porto uno casuale
+
+
+    Loop:
+        -nave sceglie il porto dove andare(quello piu vicino e con piu merce in offerta)-->algoritmo che lo calcola run time
+        -nave negozia con il porto
+        -nave si muove verso il porto
+        -nave occupa una banchina
+        -nave scarica la merce
+        -nave carica la merce
+        -nave libera banchina
+        -nave scade la merce(??????????????????? non so quando farlo)
+        REPEAT
