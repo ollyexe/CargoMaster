@@ -12,14 +12,14 @@ void seedRandom() {
         perror("clock_gettime");
         exit(1);
     }
-    srand(seed);
+    srand(ts.tv_nsec+seed);
 
 }
 
 int getRandomNumber(int lowerLimit, int upperLimit) {
      int randomNumber;
-
-     randomNumber= rand() % (upperLimit - lowerLimit ) + lowerLimit;
+     seedRandom();
+     randomNumber= rand() % (upperLimit - lowerLimit +1) + lowerLimit;
 
     return randomNumber;
 }
@@ -27,39 +27,12 @@ int getRandomNumber(int lowerLimit, int upperLimit) {
 
 double getRandomDouble(int lowerLimit, int upperLimit) {
     double range,randomFraction;
+    seedRandom();
     range = (double)((double)upperLimit - (double)lowerLimit);
     randomFraction = ((double)rand() / RAND_MAX);
     return (randomFraction * range) + (double)lowerLimit;
 }
 
-void addMerce(Tipo_merce *tipo_merce, Merce merce) {
-    /* Calculate the new size of the array */
-    int new_size = tipo_merce->size + 1;
-
-    /* Allocate memory for the new array */
-    Merce *new_lotti_merce = malloc(new_size * sizeof(Merce));
-    if (new_lotti_merce == NULL) {
-        /* Handle memory allocation error */
-        /* You may want to return an error code or exit gracefully */
-        return;
-    }
-
-    /* Copy the existing elements into the new array */
-    int i;
-    for (i = 0; i < tipo_merce->size; i++) {
-        new_lotti_merce[i] = tipo_merce->lotti_merce[i];
-    }
-
-    /* Add the new Merce item to the end of the new array */
-    new_lotti_merce[tipo_merce->size] = merce;
-
-    /* Free the old array */
-    free(tipo_merce->lotti_merce);
-
-    /* Update the Tipo_merce structure with the new array and size */
-    tipo_merce->lotti_merce = new_lotti_merce;
-    tipo_merce->size = new_size;
-}
 
 
 
@@ -87,5 +60,14 @@ void destroy_sem(int sem_id) {
         exit(EXIT_FAILURE);
     }
 
+}
+
+int sum_array(int arr[],int size){
+    int i;
+    int result = 0;
+    for (i = 0; i < size; i++) {
+        result += arr[i];
+    }
+    return result;
 }
 

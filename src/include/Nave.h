@@ -1,4 +1,3 @@
-#include "Merce.h"
 #include "../resources/born_to_run.h"
 #include "../include/Util.h"
 
@@ -16,7 +15,7 @@ typedef struct {
     Coordinate coordinate;
     int  capacita;
     double velocita;
-    Matrice_merce matrice_merce;
+    int  matrice_merce[SO_MERCI][SO_MAX_VITA];
     struct Statistiche statistiche;
 } Nave;
 
@@ -25,8 +24,7 @@ void stampa_nave(Nave *nave);
 int is_piena(Nave nave);
 void init_matrice_merce(Nave *nave);
 void free_nave(Nave *nave);
-void carica_merce(Nave *nave, Merce merce);
-void scarica_merce(Nave *nave, int tipo_merce, int quantita);
+void carica_merce(Nave *nave, int tipo, int quantita, int vita);
 
 
 

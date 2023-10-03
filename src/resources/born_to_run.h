@@ -13,7 +13,7 @@
 #define SO_SPEED 500
 #define SO_CAPACITY 1000
 #define SO_BANCHINE 10
-#define SO_FILL 100000
+#define SO_FILL 10000
 #define SO_LOADSPEED 200
 #define SO_DAYS 10
 

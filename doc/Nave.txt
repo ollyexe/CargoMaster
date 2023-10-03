@@ -28,11 +28,11 @@ Assunzioni :
 
     Loop:
         -nave sceglie il porto dove andare(quello piu vicino e con piu merce in offerta)-->algoritmo che lo calcola run time
-        -nave negozia con il porto
         -nave si muove verso il porto
         -nave occupa una banchina
-        -nave scarica la merce
-        -nave carica la merce
+        -nave negozia con il porto----> la negoziazione è totale per tutto il carico cioe carica e scarica tutto l'indispensabile
+        -nave scarica la merce----> scarica la merce che ha piu meno di vita
+        -nave carica la merce---> carica merce con piu giorni vita
         -nave libera banchina
         -nave scade la merce(??????????????????? non so quando farlo)
         REPEAT

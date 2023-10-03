@@ -1,4 +1,3 @@
-#include "Merce.h"
 #include "../resources/born_to_run.h"
 #include "../include/Util.h"
 
@@ -12,7 +11,7 @@ struct StatistichePorto{
 
 typedef struct Mercato{/*sfrutto il fatto che ci sono SO_MERCI tipi di merce*/
     int domanda[SO_MERCI];
-    Matrice_merce matrice_merce;
+    int offerta[SO_MERCI][SO_MAX_VITA];/*TIPO|VITA---> il dato sara la quantita*/
 }Mercato;
 
 
@@ -21,7 +20,7 @@ typedef struct Mercato{/*sfrutto il fatto che ci sono SO_MERCI tipi di merce*/
 
 typedef struct {
     Coordinate coordinate;
-    int banchine_libere;
+    int banchine_libere,ordinativo;
     struct Mercato mercato;
     struct StatistichePorto statistiche;
 } Porto;
@@ -31,7 +30,7 @@ typedef struct {
 
 Porto crea_porto();
 Porto crea_porto_special(double longitudine, double latitudine);
-void crea_mercato(Mercato *mercato);
-void free_porto(Porto *porto);
-int get_tipi_di_merce_disponibili(Porto porto);
+void crea_mercato(Porto * porto);
 void stampa_porto(Porto porto);
+int port_array_attach();
+int * port_array_index_attach();
