@@ -21,6 +21,7 @@ Nave crea_nave(){
     result.coordinate.latitudine = getRandomDouble(0,SO_LATO);
     result.capacita = SO_CAPACITY;
     result.velocita = SO_SPEED;
+    result.stato = 1;
     result.statistiche.merci_caricate = 0;
     result.statistiche.merci_disponibili = 0;
     result.statistiche.merci_perdute = 0;

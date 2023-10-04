@@ -1,5 +1,6 @@
--gestione banchine
+-gestione banchine-->set semafori con n sem , dove n = num banchine
 -gestione giorni
      -check porto morto
      -check scadenze
 -gestione DUMP
+-uso di msqueeue o pipe

@@ -31,6 +31,5 @@ typedef struct {
 Porto crea_porto();
 Porto crea_porto_special(double longitudine, double latitudine);
 void crea_mercato(Porto * porto);
-void stampa_porto(Porto porto);
 int port_array_attach();
 int * port_array_index_attach();

@@ -143,8 +143,6 @@ void genera_domanda(Mercato *mercato) {
 
 void crea_mercato(Porto *porto) {
     init_matrice_offerta(porto);
-    genera_domanda(&porto->mercato);
-    genera_merce(&porto->mercato);
 }
 
 void stampa_porto(Porto porto) {
@@ -222,7 +220,6 @@ int main() {
             array[*index] = crea_porto();
             array[*index].ordinativo = *index;
     }
-    printf("sono porto %d\n",*index);
     *index = *index +1;
 
 

@@ -17,6 +17,8 @@ typedef struct {
     double velocita;
     int  matrice_merce[SO_MERCI][SO_MAX_VITA];
     struct Statistiche statistiche;
+    int stato;/*0-in mare con un carico a bordo|1-in mare senza un carico|2-occupano una banchina*/
+
 } Nave;
 
 Nave  crea_nave();
