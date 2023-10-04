@@ -34,7 +34,33 @@ double getRandomDouble(int lowerLimit, int upperLimit) {
 }
 
 
+void take_sem_banc(int sem_id) {
+    struct sembuf semaphore_operation;
 
+    semaphore_operation.sem_num = 0;
+    semaphore_operation.sem_op = -1;
+    semaphore_operation.sem_flg = 0;
+
+
+    if (semop(sem_id, &semaphore_operation, 1) == -1) {
+        perror("semop");
+        exit(EXIT_FAILURE);
+    }
+}
+
+void release_sem_banc(int sem_id) {
+    struct sembuf semaphore_operation;
+
+    semaphore_operation.sem_num = 0;
+    semaphore_operation.sem_op = 1;
+    semaphore_operation.sem_flg = 0;
+
+
+    if (semop(sem_id, &semaphore_operation, 1) == -1) {
+        perror("semop");
+        exit(EXIT_FAILURE);
+    }
+}
 
 
 void take_sem(int sem_id) {

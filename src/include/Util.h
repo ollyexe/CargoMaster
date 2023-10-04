@@ -24,4 +24,6 @@ void take_sem(int sem_id);
 void release_sem(int sem_id);
 void destroy_sem(int sem_id);
 int sum_array(int arr[],int size);
+void take_sem_banc(int sem_id);
+void release_sem_banc(int sem_id);
 #endif /* UTIL_H */

@@ -145,11 +145,11 @@ int calcola_spazio_disponibile(Nave nave){
 
 
 
-int sum_merce_(Porto porto){
+int sum_merce_(int arr[SO_MERCI][SO_MAX_VITA]){
     int i;
     int result = 0;
     for (i = 0; i < SO_MERCI; i++) {
-        result += sum_array(porto.mercato.offerta[i],SO_MAX_VITA);
+        result += sum_array(arr[i],SO_MAX_VITA);
     }
     return result;
 }
@@ -160,7 +160,7 @@ int is_port_eligible(Porto porto, Nave nave){
     for (i = 0; i < SO_MERCI; i++) {
         if (porto.mercato.domanda[i] > 0) {
             /*matching domanda e offerta*/
-            if (sum_array(nave.matrice_merce[i],SO_MAX_VITA)> 0 || sum_array(porto.mercato.offerta[i],SO_MAX_VITA) > 0 && calcola_spazio_disponibile(nave) > 0) {
+            if (sum_merce_(porto.mercato.offerta)> 0 || sum_array(porto.mercato.offerta[i],SO_MAX_VITA) > 0 && calcola_spazio_disponibile(nave) > 0) {
                 return 1;
             }
         }
@@ -170,7 +170,7 @@ int is_port_eligible(Porto porto, Nave nave){
 int chose_port(Porto * portArray, Nave nave){
     int i;
     int best_port = -1;
-    double best_distance = 0;
+    double best_distance = 2147483647;
     for (i = 0; i < SO_PORTI; i++) {
         if (portArray[i].ordinativo!=-1){ /*check porto vivo*/
             double distance = abs(sqrt(pow((portArray[i].coordinate.longitudine -nave.coordinate.longitudine), 2) + pow(( portArray[i].coordinate.latitudine-nave.coordinate.latitudine), 2)));
@@ -366,12 +366,15 @@ int main(){
         portArray = shmat(port_array_attach(), NULL, 0);
         porto_to_go = chose_port(portArray,nave);
         porto = portArray[porto_to_go];
-        check_scadenza_porto(&porto);
+        semctl(porto.sem_id,0,SETVAL,0);
+        printf("before banchine %d\n", semctl(porto.sem_id,0,GETVAL));
+        take_sem_banc(porto.sem_id);
+        printf("aftere banchine %d\n", semctl(porto.sem_id,0,GETVAL));
+        check_scadenza_porto(&porto);/*to be done by master god*/
         sposta_nave(&nave, porto);
-        porto.banchine_libere--;
         negozia_scarica(&porto, &nave);
         portArray[0] = porto;
-        porto.banchine_libere++;
+        release_sem_banc(porto.sem_id);
         shmdt(portArray);
         release_sem(semid);
         current_day++;

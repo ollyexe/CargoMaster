@@ -1,4 +1,4 @@
--gestione banchine-->set semafori con n sem , dove n = num banchine
+-gestione banchine-->unico semaforo con valore iniziale pari al numero di banchine
 -gestione giorni
      -check porto morto
      -check scadenze

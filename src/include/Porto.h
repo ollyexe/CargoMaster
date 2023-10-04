@@ -23,6 +23,7 @@ typedef struct {
     int banchine_libere,ordinativo;
     struct Mercato mercato;
     struct StatistichePorto statistiche;
+    int sem_id;
 } Porto;
 
 
