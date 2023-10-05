@@ -366,7 +366,6 @@ int main(){
         portArray = shmat(port_array_attach(), NULL, 0);
         porto_to_go = chose_port(portArray,nave);
         porto = portArray[porto_to_go];
-        semctl(porto.sem_id,0,SETVAL,0);
         printf("before banchine %d\n", semctl(porto.sem_id,0,GETVAL));
         take_sem_banc(porto.sem_id);
         printf("aftere banchine %d\n", semctl(porto.sem_id,0,GETVAL));

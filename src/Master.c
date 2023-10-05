@@ -193,8 +193,20 @@ int porto_avido(Porto *porto,int merce){
 
 void destroy_port_sem(Porto *porto) {
     int i;
+    struct semid_ds sem_info;
     for(i = 0; i < SO_PORTI; i++) {
-        destroy_sem(porto[i].sem_id);
+        int j;
+        if (semctl(porto[i].sem_id, 0, IPC_STAT, &sem_info) == -1) {
+            perror("semctl");
+            exit(1);
+        }
+        for (j = 0; j <sem_info.sem_nsems ; j++) {
+            if (semctl(porto[i].sem_id, j, IPC_RMID) == -1) {
+                perror("semctl");
+                exit(1);
+            }
+
+        }
     }
 }
 
