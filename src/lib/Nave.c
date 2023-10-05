@@ -348,7 +348,7 @@ void check_scadenza_porto(Porto *porto) {
 
 int main(){
     Nave nave;
-    int semid = semget(IPC_PRIVATE, 1, IPC_CREAT | IPC_EXCL | 0666), porto_to_go, current_day = 0;
+    int semid = semget(getppid(), 1,  IPC_EXCL | 0666), porto_to_go, current_day = 0;
     Porto porto;
     Porto * portArray ;
     if (semid == -1) {

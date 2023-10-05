@@ -191,24 +191,21 @@ int porto_avido(Porto *porto,int merce){
 }
 
 
-void destroy_port_sem(Porto *porto) {
+void destroy_port_sem(Porto *port_array) {
     int i;
     struct semid_ds sem_info;
     for(i = 0; i < SO_PORTI; i++) {
-        int j;
-        if (semctl(porto[i].sem_id, 0, IPC_STAT, &sem_info) == -1) {
-            perror("semctl");
-            exit(1);
-        }
-        for (j = 0; j <sem_info.sem_nsems ; j++) {
-            if (semctl(porto[i].sem_id, j, IPC_RMID) == -1) {
-                perror("semctl");
-                exit(1);
-            }
-
-        }
+        destroy_sem(port_array[i].sem_id);
     }
 }
+
+void destroy_shm(int shm_id){
+    if (shmctl(shm_id, IPC_RMID, NULL)==-1){
+        perror("shmctl");
+        exit(EXIT_FAILURE);
+    }
+}
+
 
 
 int main() {
@@ -217,10 +214,11 @@ int main() {
     char *argv[] = { NULL};
     struct sembuf operation;
     key_t portArrayKey = ftok(masterPath, 'p'),portArrayIndexKey= ftok(masterPath, 'i');
-    int portArraySMID = shmget(portArrayKey, SO_PORTI* sizeof(Porto),  IPC_CREAT | IPC_EXCL | 0666),portArrayIndexSHMID = shmget(portArrayIndexKey,sizeof(int),IPC_CREAT | 0666);/*id della shared memory*/
-    Porto * portArray = shmat(portArraySMID, NULL, 0);
+    int portArraySHMID = shmget(portArrayKey, SO_PORTI * sizeof(Porto), IPC_CREAT  | 0666),portArrayIndexSHMID = shmget(portArrayIndexKey, sizeof(int), IPC_CREAT  | 0666);/*id della shared memory*/
+    Porto * portArray = shmat(portArraySHMID, NULL, 0);
     int * portArrayIndex = shmat(portArrayIndexSHMID, NULL, 0);
-    int semid= semget(IPC_PRIVATE, 1, IPC_CREAT | IPC_EXCL | 0666);
+    int semid= semget(getpid(), 1, IPC_CREAT | IPC_EXCL | 0666);
+    printf("master %d\n",getpid());
     struct sembuf sem_op;
     struct shmid_ds shminfo;
     if (semid == -1) {
@@ -230,8 +228,8 @@ int main() {
     release_sem(semid);
 
     *portArrayIndex = 0;
-    shmctl(portArraySMID, IPC_STAT, &shminfo);
-    if (portArraySMID < 0) {
+    shmctl(portArraySHMID, IPC_STAT, &shminfo);
+    if (portArraySHMID < 0) {
         perror("shmget");
         exit(EXIT_FAILURE);
     }
@@ -280,15 +278,30 @@ int main() {
 
 
 
+    for (i = 0; i < SO_PORTI; i++) {
+        pid = wait(&status);
+        if (pid == -1) {
+            perror("wait");
+            exit(EXIT_FAILURE);
+        }
+    }
 
 
-
-
-    shmctl(portArrayIndexId, IPC_RMID, NULL);
-    shmctl(portArraySMID, IPC_RMID, NULL);
-    destroy_sem(semid);
+    take_sem(semid);
     destroy_port_sem(portArray);
+    release_sem(semid);
+    shmdt(portArray);
+    shmdt(portArrayIndex);
+    destroy_sem(semid);
 
+    if (shmctl(portArraySHMID, IPC_RMID, NULL)==-1){
+        perror("shmctl");
+        exit(EXIT_FAILURE);
+    }
+    if (shmctl(portArrayIndexSHMID, IPC_RMID, NULL)==-1){
+        perror("shmctl");
+        exit(EXIT_FAILURE);
+    }
 
 
 
