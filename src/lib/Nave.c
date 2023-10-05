@@ -128,7 +128,7 @@ int port_array_attach( ){
     return portArraySMID;
 }
 
-int * port_array_index_attach(){
+int * port_array_index_attach() {
     key_t portArrayIndexId= ftok(masterPath, 'i');
     int portArrayIndexSHMID = shmget(portArrayIndexId,sizeof(int),IPC_EXCL | 0666);
     int * portArrayIndex = shmat(portArrayIndexSHMID, NULL, 0);
@@ -348,7 +348,7 @@ void check_scadenza_porto(Porto *porto) {
 
 int main(){
     Nave nave;
-    int semid = semget(IPC_PRIVATE, 1, IPC_CREAT | IPC_EXCL | 0666),porto_to_go,current_day = 0;
+    int semid = semget(IPC_PRIVATE, 1, IPC_CREAT | IPC_EXCL | 0666), porto_to_go, current_day = 0;
     Porto porto;
     Porto * portArray ;
     if (semid == -1) {

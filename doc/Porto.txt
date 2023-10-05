@@ -1,5 +1,5 @@
 Porto
-	- nasce con delle coordinate(dooble)
+	- nasce con delle coordinate(double)
 	- nasce con 1-SO_BANCHINE--->random
 	- nasce con un numero di tonnellare di domanda e offerta(SO_FILL) --->quantita iniziali nei porti caratteristiche domanda/offerta:
 		-tipo di merce(intero 1-n)

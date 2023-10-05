@@ -167,7 +167,7 @@ int porto_generoso(Porto *porto,int merce){
     int max = 0;
     for (i = 0; i < SO_PORTI; i++) {
         Porto attuale = porto[i];
-        if(sum_array(attuale.mercato.offerta[merce],SO_MAX_VITA) > max){
+        if(sum_array(attuale.mercato.offerta[merce],SO_MAX_VITA) > max){/*return -1 se nessuno offre quel tipo di merce*/
             max = sum_array(attuale.mercato.offerta[merce],SO_MAX_VITA);
             generoso = i;
         }
@@ -190,6 +190,13 @@ int porto_avido(Porto *porto,int merce){
     return avido;
 }
 
+
+void destroy_port_sem(Porto *porto) {
+    int i;
+    for(i = 0; i < SO_PORTI; i++) {
+        destroy_sem(porto[i].sem_id);
+    }
+}
 
 
 int main() {
@@ -273,6 +280,7 @@ int main() {
     shmctl(portArrayIndexId, IPC_RMID, NULL);
     shmctl(portArraySMID, IPC_RMID, NULL);
     destroy_sem(semid);
+    destroy_port_sem(portArray);
 
 
 

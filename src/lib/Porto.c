@@ -23,7 +23,7 @@ Porto crea_porto() {
         exit(EXIT_FAILURE);
     }
     semctl(result.sem_id, 0, SETVAL, result.banchine_libere);
-    result.statistiche.banchine_occupate = result.banchine_libere;
+    result.statistiche.banchine_occupate = 0;
     result.statistiche.merci_spedite = 0;
     result.statistiche.merci_disponibili = 0;
     result.statistiche.merci_perdute = 0;
@@ -44,7 +44,7 @@ Porto crea_porto_special(double longitudine, double latitudine) {
         exit(EXIT_FAILURE);
     }
     semctl(result.sem_id, 0, SETVAL, result.banchine_libere);
-    result.statistiche.banchine_occupate = result.banchine_libere;
+    result.statistiche.banchine_occupate = 0;
     result.statistiche.merci_spedite = 0;
     result.statistiche.merci_disponibili = SO_FILL/SO_PORTI;
     result.statistiche.merci_perdute = 0;
@@ -238,6 +238,8 @@ int main() {
     shmdt(index);
     shmdt(array);
     release_sem(semid);
+
+
 
 
     return 0;

@@ -11,7 +11,10 @@ Contesto
 		• quando per ogni tipo di merce
 			– l’offerta `e pari a zero oppure
 			– la richiesta `e pari a zero
-		
+
+	-quando scrive il dump facciamo semaforo inverso per fermare tutti e farli scrivere,
+	quando semaforo arriva a 0 tutti ripartono , semadoro sarea SO_NAVI+SO_PORTI
+
 	Il report finale deve indicare(metodo a se):
 		• Numero di navi ancora in mare con un carico a bordo
 		• Numero di navi ancora in mare senza un carico

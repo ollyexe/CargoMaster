@@ -20,7 +20,7 @@ typedef struct Mercato{/*sfrutto il fatto che ci sono SO_MERCI tipi di merce*/
 
 typedef struct {
     Coordinate coordinate;
-    int banchine_libere,ordinativo;
+    int banchine_libere, ordinativo;
     struct Mercato mercato;
     struct StatistichePorto statistiche;
     int sem_id;
