@@ -10,6 +10,8 @@
 #include <unistd.h>
 #include <string.h>
 
+#define SEM_KEY 1000
+
 
 Porto crea_porto() {
     Porto result;
@@ -17,12 +19,7 @@ Porto crea_porto() {
     result.coordinate.latitudine = getRandomDouble(0,SO_LATO);
     result.banchine_libere = getRandomNumber(1,SO_BANCHINE);
     result.ordinativo = 0;
-    result.sem_id = semget((key_t)getpid(), 1, IPC_CREAT  | 0666);
-    if (result.sem_id == -1) {
-        perror("semget");
-        exit(EXIT_FAILURE);
-    }
-    semctl(result.sem_id, 0, SETVAL, result.banchine_libere);
+    result.sem_id = 0;
     result.statistiche.banchine_occupate = 0;
     result.statistiche.merci_spedite = 0;
     result.statistiche.merci_disponibili = 0;
@@ -38,12 +35,7 @@ Porto crea_porto_special(double longitudine, double latitudine) {
     result.coordinate.latitudine = latitudine;
     result.banchine_libere = getRandomNumber(1,SO_BANCHINE);
     result.ordinativo = 0;
-    result.sem_id = semget((key_t)getpid(), 1, IPC_CREAT  | 0666);
-    if (result.sem_id == -1) {
-        perror("semget");
-        exit(EXIT_FAILURE);
-    }
-    semctl(result.sem_id, 0, SETVAL, result.banchine_libere);
+    result.sem_id = 0;
     result.statistiche.banchine_occupate = 0;
     result.statistiche.merci_spedite = 0;
     result.statistiche.merci_disponibili = SO_FILL/SO_PORTI;
@@ -234,11 +226,9 @@ int main() {
     }
     *index = *index +1;
 
-
     shmdt(index);
     shmdt(array);
     release_sem(semid);
-
 
 
 

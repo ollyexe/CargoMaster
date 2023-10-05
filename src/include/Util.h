@@ -26,4 +26,5 @@ void destroy_sem(int sem_id);
 int sum_array(int arr[],int size);
 void take_sem_banc(int sem_id);
 void release_sem_banc(int sem_id);
+int get_nano_sec();
 #endif /* UTIL_H */

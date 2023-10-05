@@ -7,11 +7,11 @@
 
 void seedRandom() {
     struct timespec ts;
-    unsigned long seed = ((unsigned long)ts.tv_sec * 1000000000) + ts.tv_nsec;
     if (clock_gettime(CLOCK_REALTIME, &ts) == -1) {
         perror("clock_gettime");
         exit(1);
     }
+    unsigned long seed = ((unsigned long)ts.tv_sec * 1000000000) + ts.tv_nsec;
     srand(ts.tv_nsec+seed);
 
 }
@@ -43,7 +43,7 @@ void take_sem_banc(int sem_id) {
 
 
     if (semop(sem_id, &semaphore_operation, 1) == -1) {
-        perror("semop");
+        perror("semop banchine take ");
         exit(EXIT_FAILURE);
     }
 }
@@ -57,7 +57,7 @@ void release_sem_banc(int sem_id) {
 
 
     if (semop(sem_id, &semaphore_operation, 1) == -1) {
-        perror("semop");
+        perror("semop banchine release");
         exit(EXIT_FAILURE);
     }
 }
@@ -67,14 +67,14 @@ void take_sem(int sem_id) {
 
 
     if (semctl(sem_id,0,SETVAL,0) == -1) {
-        perror("semop");
+        perror("semop  take");
         exit(EXIT_FAILURE);
     }
 }
 
 void release_sem(int sem_id) {
     if (semctl(sem_id,0,SETVAL,1) == -1) {
-        perror("semop");
+        perror("semop release");
         exit(EXIT_FAILURE);
     }
 }
@@ -95,5 +95,14 @@ int sum_array(int arr[],int size){
         result += arr[i];
     }
     return result;
+}
+
+int get_nano_sec(){
+    struct timespec ts;
+    if (clock_gettime(CLOCK_REALTIME, &ts) == -1) {
+        perror("clock_gettime");
+        exit(1);
+    }
+    return ts.tv_nsec;
 }
 

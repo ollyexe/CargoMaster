@@ -162,6 +162,19 @@ void distribuisci_offerta(Porto *porto){
     }
 }
 
+void init_sem_banchine(Porto *array){
+    int i = 0;
+
+    for (i;i<SO_PORTI;i++){
+        array[i].sem_id=semget((key_t)get_nano_sec(), 1, IPC_CREAT  | 0666);
+        if (array[i].sem_id == -1) {
+            perror("semget");
+            exit(EXIT_FAILURE);
+        }
+        semctl(array[i].sem_id, 0, SETVAL, array[i].sem_id);
+    }
+}
+
 int porto_generoso(Porto *porto,int merce){
     int i;
     int generoso = -1;
@@ -194,9 +207,15 @@ int porto_avido(Porto *porto,int merce){
 
 void destroy_port_sem(Porto *port_array) {
     int i;
-    struct semid_ds sem_info;
     for(i = 0; i < SO_PORTI; i++) {
-        destroy_sem(port_array[i].sem_id);
+        Porto *porto = &port_array[i];
+        printf("%d\n",porto->sem_id);
+        if (semctl(porto->sem_id,0 ,IPC_RMID)==-1){
+            printf("sono nr %d \n",port_array[i].ordinativo);
+            perror("semdest port");
+            exit(EXIT_FAILURE);
+        }
+
     }
 }
 
@@ -212,15 +231,15 @@ void destroy_shm(int shm_id){
 int main() {
 
     int i,sem_id,pid,status;
-    char *argv[] = { NULL};
+    char *argv[] = { NULL},*envp[] = {NULL};
     struct sembuf operation;
     key_t portArrayKey = ftok(masterPath, 'p'),portArrayIndexKey= ftok(masterPath, 'i');
     int portArraySHMID = shmget(portArrayKey, SO_PORTI * sizeof(Porto), IPC_CREAT  | 0666),portArrayIndexSHMID = shmget(portArrayIndexKey, sizeof(int), IPC_CREAT  | 0666);/*id della shared memory*/
     Porto * portArray = shmat(portArraySHMID, NULL, 0);
     int * portArrayIndex = shmat(portArrayIndexSHMID, NULL, 0);
-    int semid= semget(getpid(), 1, IPC_CREAT  | 0666);
+    int semid = semget((key_t)getpid(), 1, IPC_CREAT  | 0666);
     struct sembuf sem_op;
-    struct shmid_ds shminfo;
+
     if (semid == -1) {
         perror("semget");
         exit(EXIT_FAILURE);
@@ -228,7 +247,7 @@ int main() {
     release_sem(semid);
 
     *portArrayIndex = 0;
-    shmctl(portArraySHMID, IPC_STAT, &shminfo);
+
     if (portArraySHMID < 0) {
         perror("shmget");
         exit(EXIT_FAILURE);
@@ -244,21 +263,24 @@ int main() {
                 perror("fork");
                 exit(EXIT_FAILURE);
             case 0:
-                execv(portoPath,argv);
+                execve(portoPath,argv,envp);
                 exit(EXIT_FAILURE);
             default:
                 break;
         }
     }
-
+    sleep(5);
 
     take_sem(semid);
     distribuisci_domanda(portArray);
     distribuisci_offerta(portArray);
+    init_sem_banchine(portArray);
     printf("generoso %d\n",porto_generoso(portArray,0));
     printf("avido %d\n",porto_avido(portArray,0));
     release_sem(semid);
-    /*
+
+
+    sleep(10);
     for (i=0;i<SO_NAVI;i++){
         pid_t pid = fork();
         switch (pid){
@@ -271,26 +293,18 @@ int main() {
             default:
                 break;
         }
-    }*/
+    }
 
     /*ogni giorno si controlla che ogni porto sia ancora operativo(ha della merce in domanda) se nomette l'ordinativo a -1 che è segno di esser morto*/
 
 
 
 
-    for (i = 0; i < SO_PORTI; i++) {
-        pid = wait(&status);
-        if (pid == -1) {
-            perror("wait");
-            exit(EXIT_FAILURE);
-        }
-    }
+    sleep(10);
 
 
-    Porto p = portArray[SO_PORTI-1];
-    take_sem(semid);
     destroy_port_sem(portArray);
-    release_sem(semid);
+    sleep(10);
     shmdt(portArray);
     shmdt(portArrayIndex);
 
@@ -302,6 +316,7 @@ int main() {
         perror("shmctl index");
         exit(EXIT_FAILURE);
     }
+    take_sem(semid);
     destroy_sem(semid);
 
 
