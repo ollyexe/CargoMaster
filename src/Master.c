@@ -156,6 +156,7 @@ void distribuisci_offerta(Porto *porto){
         Porto * attuale = &porto[i];
         int quota_merci = getRandomNumber(1,offerta-porti);/* - porti per avere almeno 1 tonnellata in domanda*/
         genera_merce(&attuale->mercato,quota_merci);
+        attuale->statistiche.merci_disponibili += quota_merci;
         offerta -= quota_merci;
         porti--;
     }
@@ -217,8 +218,7 @@ int main() {
     int portArraySHMID = shmget(portArrayKey, SO_PORTI * sizeof(Porto), IPC_CREAT  | 0666),portArrayIndexSHMID = shmget(portArrayIndexKey, sizeof(int), IPC_CREAT  | 0666);/*id della shared memory*/
     Porto * portArray = shmat(portArraySHMID, NULL, 0);
     int * portArrayIndex = shmat(portArrayIndexSHMID, NULL, 0);
-    int semid= semget(getpid(), 1, IPC_CREAT | IPC_EXCL | 0666);
-    printf("master %d\n",getpid());
+    int semid= semget(getpid(), 1, IPC_CREAT  | 0666);
     struct sembuf sem_op;
     struct shmid_ds shminfo;
     if (semid == -1) {
@@ -287,21 +287,22 @@ int main() {
     }
 
 
+    Porto p = portArray[SO_PORTI-1];
     take_sem(semid);
     destroy_port_sem(portArray);
     release_sem(semid);
     shmdt(portArray);
     shmdt(portArrayIndex);
-    destroy_sem(semid);
 
     if (shmctl(portArraySHMID, IPC_RMID, NULL)==-1){
-        perror("shmctl");
+        perror("shmctl array");
         exit(EXIT_FAILURE);
     }
     if (shmctl(portArrayIndexSHMID, IPC_RMID, NULL)==-1){
-        perror("shmctl");
+        perror("shmctl index");
         exit(EXIT_FAILURE);
     }
+    destroy_sem(semid);
 
 
 

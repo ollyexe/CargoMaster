@@ -204,7 +204,6 @@ int main() {
     Porto *array = shmat(port_array_attach(), NULL, 0);
     struct sembuf sem_op;
     int semid = semget(getppid(), 1,IPC_EXCL | 0666);
-    printf("%d\n",getppid());
     Porto porto ;
     if (semid == -1) {
         perror("semget");

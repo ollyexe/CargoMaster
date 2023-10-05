@@ -350,7 +350,7 @@ int main(){
     Nave nave;
     int semid = semget(getppid(), 1,  IPC_EXCL | 0666), porto_to_go, current_day = 0;
     Porto porto;
-    Porto * portArray ;
+    Porto * portArray;
     if (semid == -1) {
         perror("semget");
         exit(EXIT_FAILURE);

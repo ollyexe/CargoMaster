@@ -82,7 +82,7 @@ void release_sem(int sem_id) {
 
 void destroy_sem(int sem_id) {
     if (semctl(sem_id, 0, IPC_RMID) == -1) {
-        perror("semctl");
+        perror("semctl semaforo");
         exit(EXIT_FAILURE);
     }
 
