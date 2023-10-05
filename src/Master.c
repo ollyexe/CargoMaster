@@ -216,8 +216,8 @@ int main() {
     int i,sem_id,pid,status;
     char *argv[] = { NULL};
     struct sembuf operation;
-    key_t portArrayKey = ftok(masterPath, 'p'),portArrayIndexId= ftok(masterPath, 'i');
-    int portArraySMID = shmget(portArrayKey, SO_PORTI* sizeof(Porto),  IPC_CREAT | IPC_EXCL | 0666),portArrayIndexSHMID = shmget(portArrayIndexId,sizeof(int),IPC_CREAT | 0666);/*id della shared memory*/
+    key_t portArrayKey = ftok(masterPath, 'p'),portArrayIndexKey= ftok(masterPath, 'i');
+    int portArraySMID = shmget(portArrayKey, SO_PORTI* sizeof(Porto),  IPC_CREAT | IPC_EXCL | 0666),portArrayIndexSHMID = shmget(portArrayIndexKey,sizeof(int),IPC_CREAT | 0666);/*id della shared memory*/
     Porto * portArray = shmat(portArraySMID, NULL, 0);
     int * portArrayIndex = shmat(portArrayIndexSHMID, NULL, 0);
     int semid= semget(IPC_PRIVATE, 1, IPC_CREAT | IPC_EXCL | 0666);
@@ -238,6 +238,7 @@ int main() {
     seedRandom();
 
     /*creazione porti*/
+
     for (i=0;i<SO_PORTI;i++){
          pid = fork();
         switch (pid){
@@ -252,21 +253,15 @@ int main() {
         }
     }
 
-    for (i = 0; i < SO_PORTI; i++) {
-        pid = wait(&status);
-        if (pid == -1) {
-            perror("wait");
-            exit(EXIT_FAILURE);
-        }
-    }
+
     take_sem(semid);
     distribuisci_domanda(portArray);
     distribuisci_offerta(portArray);
     printf("generoso %d\n",porto_generoso(portArray,0));
     printf("avido %d\n",porto_avido(portArray,0));
     release_sem(semid);
-
-    /*for (i=0;i<SO_NAVI;i++){
+    /*
+    for (i=0;i<SO_NAVI;i++){
         pid_t pid = fork();
         switch (pid){
             case -1:

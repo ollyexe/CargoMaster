@@ -6,9 +6,9 @@
 #include <stdlib.h>
 
 
-static char *portoPath = "/mnt/c/Users/olly/Desktop/SO/CargoMaster/bin/processi/porto";
-static char *navePath = "/mnt/c/Users/olly/Desktop/SO/CargoMaster/bin/processi/nave";
-static char *masterPath = "/mnt/c/Users/olly/Desktop/SO/CargoMaster/src/Master.c";
+static char *portoPath = "/Users/ari3/Desktop/progetto SO/bin/processi/porto";
+static char *navePath = "/Users/ari3/Desktop/progetto SO/bin/processi/nave";
+static char *masterPath = "/Users/ari3/Desktop/progetto SO/src/Master.c";
 
 
 typedef struct Coordinate{
