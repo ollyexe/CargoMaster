@@ -19,7 +19,12 @@ Porto crea_porto() {
     result.coordinate.latitudine = getRandomDouble(0,SO_LATO);
     result.banchine_libere = getRandomNumber(1,SO_BANCHINE);
     result.ordinativo = 0;
-    result.sem_id = 0;
+    result.sem_id = semget((key_t)( getRandomNumber(7,1447523497)), 1, IPC_CREAT  | 0666);
+    if (result.sem_id == -1) {
+        perror("semget");
+        exit(EXIT_FAILURE);
+    }
+    semctl(result.sem_id, 0, SETVAL, result.sem_id);
     result.statistiche.banchine_occupate = 0;
     result.statistiche.merci_spedite = 0;
     result.statistiche.merci_disponibili = 0;
@@ -35,7 +40,12 @@ Porto crea_porto_special(double longitudine, double latitudine) {
     result.coordinate.latitudine = latitudine;
     result.banchine_libere = getRandomNumber(1,SO_BANCHINE);
     result.ordinativo = 0;
-    result.sem_id = 0;
+    result.sem_id = semget((key_t)getRandomNumber(7,1447523497), 1, IPC_CREAT  | 0666);
+    if (result.sem_id == -1) {
+        perror("semget");
+        exit(EXIT_FAILURE);
+    }
+    semctl(result.sem_id, 0, SETVAL, result.sem_id);
     result.statistiche.banchine_occupate = 0;
     result.statistiche.merci_spedite = 0;
     result.statistiche.merci_disponibili = SO_FILL/SO_PORTI;

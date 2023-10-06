@@ -162,18 +162,6 @@ void distribuisci_offerta(Porto *porto){
     }
 }
 
-void init_sem_banchine(Porto *array){
-    int i = 0;
-
-    for (i;i<SO_PORTI;i++){
-        array[i].sem_id=semget((key_t)get_nano_sec(), 1, IPC_CREAT  | 0666);
-        if (array[i].sem_id == -1) {
-            perror("semget");
-            exit(EXIT_FAILURE);
-        }
-        semctl(array[i].sem_id, 0, SETVAL, array[i].sem_id);
-    }
-}
 
 int porto_generoso(Porto *porto,int merce){
     int i;
@@ -249,7 +237,7 @@ int main() {
     *portArrayIndex = 0;
 
     if (portArraySHMID < 0) {
-        perror("shmget");
+        perror("shmget port array");
         exit(EXIT_FAILURE);
     }
     seedRandom();
@@ -269,18 +257,17 @@ int main() {
                 break;
         }
     }
-    sleep(5);
 
     take_sem(semid);
     distribuisci_domanda(portArray);
     distribuisci_offerta(portArray);
-    init_sem_banchine(portArray);
     printf("generoso %d\n",porto_generoso(portArray,0));
     printf("avido %d\n",porto_avido(portArray,0));
     release_sem(semid);
 
 
-    sleep(10);
+
+
     for (i=0;i<SO_NAVI;i++){
         pid_t pid = fork();
         switch (pid){
@@ -302,9 +289,7 @@ int main() {
 
     sleep(10);
 
-
     destroy_port_sem(portArray);
-    sleep(10);
     shmdt(portArray);
     shmdt(portArrayIndex);
 

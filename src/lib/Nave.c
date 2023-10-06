@@ -372,7 +372,7 @@ int main(){
         check_scadenza_porto(&porto);/*to be done by master god*/
         sposta_nave(&nave, porto);
         negozia_scarica(&porto, &nave);
-        portArray[0] = porto;
+        portArray[porto_to_go] = porto;
         release_sem_banc(porto.sem_id);
         shmdt(portArray);
         release_sem(semid);
