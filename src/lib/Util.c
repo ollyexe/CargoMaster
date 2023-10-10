@@ -4,6 +4,8 @@
 #include <sys/ipc.h>
 #include <sys/sem.h>
 #include <time.h>
+#include <unistd.h>
+#include <errno.h>
 
 void seedRandom() {
     struct timespec ts;
@@ -44,7 +46,7 @@ void take_sem_banc(int sem_id) {
 
 
     if (semop(sem_id, &semaphore_operation, 1) == -1) {
-        printf("sem val  %d ", semctl(sem_id,0,GETVAL)) ;
+        printf("take_sem_banc  %d ", errno) ;
         perror("semop banchine take ");
     }
 }

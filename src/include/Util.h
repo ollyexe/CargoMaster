@@ -17,6 +17,11 @@ typedef struct Coordinate{
     double latitudine;
 }Coordinate;
 
+typedef struct Message{
+    long mtype;
+    char mess[4096];
+}Message;
+
 
 int getRandomNumber(int lowerLimit, int upperLimit);
 double getRandomDouble(int lowerLimit, int upperLimit);

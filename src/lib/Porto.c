@@ -12,6 +12,7 @@
 #include <string.h>
 #include <signal.h>
 #include <sys/msg.h>
+#include <errno.h>
 
 #define SEM_KEY 1000
 
@@ -23,6 +24,7 @@ Porto crea_porto() {
     result.coordinate.latitudine = getRandomDouble(0,SO_LATO);
     result.banchine = getRandomNumber(1,SO_BANCHINE);
     result.ordinativo = 0;
+    result.pid = getpid();
     result.sem_id = semget((key_t)( getRandomNumber(7,1447523497)), 1, IPC_CREAT  | 0666);
     if (result.sem_id == -1) {
         perror("semget");
@@ -44,6 +46,7 @@ Porto crea_porto_special(double longitudine, double latitudine) {
     result.coordinate.latitudine = latitudine;
     result.banchine = getRandomNumber(1,SO_BANCHINE);
     result.ordinativo = 0;
+    result.pid = getpid();
     result.sem_id = semget((key_t)getRandomNumber(7,1447523497), 1, IPC_CREAT  | 0666);
     if (result.sem_id == -1) {
         perror("semget");
@@ -184,6 +187,8 @@ int port_array_attach( ){
 
     if (portArraySMID < 0) {
         perror("shmget port array attach");
+        printf("%d\n",errno);
+        printf("%d\n",portArrayKey);
         exit(EXIT_FAILURE);
     }
     return portArraySMID;
@@ -241,12 +246,11 @@ void init_sigaction(struct sigaction *sa, void (*handler)(int)) {
 int main() {
     int * index = port_array_index_attach();
     Porto *array = shmat(port_array_attach(), NULL, 0);
-    struct sembuf sem_op;
-    int semid = semget(1000, 1,IPC_EXCL | 0666),i=0;
-    Porto porto ;
+    int semid = semget(1000, 1,IPC_EXCL | 0666),i=0,local_index = *index;
+    Porto *porto ;
+    DumpPorto dumpPorto;
     struct sigaction sa;
-    int flag_signal = 0;
-    int msqid = msgget(4000, IPC_EXCL | 0666);
+    int msqid = msgget((key_t)1234, IPC_EXCL | 0666);
     init_sigaction(&sa, signalHandler);
     if (semid == -1) {
         perror("semget porto array");
@@ -275,41 +279,42 @@ int main() {
             array[*index] = crea_porto();
             array[*index].ordinativo = *index;
     }
-    porto = array[*index];
     *index = *index +1;
-    shmdt(index);
-    shmdt(array);
     release_sem(semid);
-
     while (i<SO_DAYS){
-        DumpPorto dumpPorto;
+        printf("porto %d| merci %d\n\n",local_index,array[local_index].statistiche.merci_disponibili);
+        porto = &array[local_index];
         sleep(1);
         take_sem(semid);
         check_scadenza_porto(&porto);
-        shmdt(array);
+        array[local_index] = *porto;
         release_sem(semid);
+
         while (!receivedSignal) {
             pause();
         }
-        dumpPorto.mtype=0;
-        dumpPorto.merci_disponibili = porto.statistiche.merci_disponibili;
-        dumpPorto.merci_perdute = porto.statistiche.merci_perdute;
-        dumpPorto.merci_ricevute = porto.statistiche.merci_ricevute;
-        dumpPorto.merci_spedite = porto.statistiche.merci_spedite;
-        dumpPorto.banchine_occupate = porto.banchine-semctl(porto.sem_id,0,GETVAL);
-        printf("porto %d\n",dumpPorto.banchine_occupate);
-        if (msgsnd(msqid, &dumpPorto, sizeof(DumpPorto)-sizeof(long), 0) == -1) {
+
+        dumpPorto.mtype = 1;
+        dumpPorto.banchine_occupate = porto->banchine- semctl(porto->sem_id,0,GETVAL);
+        dumpPorto.merci_disponibili = porto->statistiche.merci_disponibili;
+        dumpPorto.merci_perdute = porto->statistiche.merci_perdute;
+        dumpPorto.merci_ricevute = porto->statistiche.merci_ricevute;
+        dumpPorto.merci_spedite = porto->statistiche.merci_spedite;
+        printf("porto %d: %d|%d|%d|%d|%d\n",porto->ordinativo,dumpPorto.merci_disponibili,dumpPorto.merci_ricevute,dumpPorto.merci_spedite,dumpPorto.merci_perdute,dumpPorto.banchine_occupate);
+        if (msgsnd(msqid, &dumpPorto, sizeof(DumpPorto), 0) == -1) {
             perror("msgsnd");
+            printf("%d\n",errno);
             exit(EXIT_FAILURE);
         }
-        /*send dump*/
         receivedSignal = 0;
+
         i++;
 
 
     }
 
-
+    shmdt(index);
+    shmdt(array);
 
     return 0;
 }

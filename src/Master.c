@@ -71,8 +71,13 @@ void genera_merce(Mercato *mercato,int quota_merce){
             } else{
                 quantita = getRandomNumber(1, ratio_merce_x_tipo - sum);
             }
+            while(1){
+                vita = getRandomNumber(SO_MIN_VITA, SO_MAX_VITA);
+                if(vita= SO_MAX_VITA-1){
+                    break;
+                }
+            }
 
-            vita = getRandomNumber(SO_MIN_VITA, SO_MAX_VITA-1);
             mercato->offerta[tipo][vita] += quantita;
             full_quota += quantita;
             sum += quantita;
@@ -130,7 +135,7 @@ void distribuisci_domanda(Porto *porto){
 
     for (i = 0; i < SO_PORTI; i++) {
         Porto * attuale = &porto[i];
-        int merci_in_domanda = getRandomNumber(1,SO_MERCI-2);/*per avere almeno 1 merce in offerta*/
+        int merci_in_domanda = getRandomNumber(1,SO_MERCI);/*per avere almeno 1 merce in offerta*/
         int quota_merci = getRandomNumber(1,domanda-porti);/* - porti per avere almeno 1 tonnellata in domanda*/
         if(i==SO_PORTI-1){
             quota_merci = domanda;
@@ -160,6 +165,14 @@ void distribuisci_offerta(Porto *porto){
         attuale->statistiche.merci_disponibili += quota_merci;
         offerta -= quota_merci;
         porti--;
+    }
+
+    if(offerta > 0){
+        int random_porto = getRandomNumber(0,SO_PORTI-1);
+        Porto * attuale = &porto[random_porto];
+        genera_merce(&attuale->mercato,SO_FILL-offerta);
+        attuale->statistiche.merci_disponibili += (SO_FILL-offerta);
+        offerta -= (SO_FILL-offerta);
     }
 }
 
@@ -230,20 +243,17 @@ int compute_active_ports(Porto *array){
 
 int main() {
 
-    int i,j,pid,pids[SO_PORTI+SO_NAVI];
+    int i,j,pid,pids[SO_PORTI];
     char *argv[] = { NULL},*envp[] = {NULL};
     key_t portArrayKey = ftok(masterPath, 'p'),portArrayIndexKey= ftok(masterPath, 'i');
     int portArraySHMID = shmget(portArrayKey, SO_PORTI * sizeof(Porto), IPC_CREAT  | 0666),portArrayIndexSHMID = shmget(portArrayIndexKey, sizeof(int), IPC_CREAT  | 0666);/*id della shared memory*/
     Porto * portArray = shmat(portArraySHMID, NULL, 0);
     int * portArrayIndex = shmat(portArrayIndexSHMID, NULL, 0);
-    int semid = semget(1000, 1, IPC_CREAT  | 0666),dump_sem_id= semget(1001, 1, IPC_CREAT | 0666);
+    int semid = semget(1000, 1, IPC_CREAT|0666);
     struct sembuf sem_op;
-    int msqid = msgget(4000, IPC_CREAT | 0666);
-    if (semctl(dump_sem_id, 0, SETVAL, SO_PORTI+SO_NAVI+1) == -1) {
-        perror("semop porti init");
-        exit(EXIT_FAILURE);
-    }
+    int msqid = msgget((key_t)1234, IPC_CREAT | 0666);
 
+    Porto *tmp;
 
     if (semid == -1) {
         perror("semget");
@@ -259,7 +269,6 @@ int main() {
     }
     seedRandom();
 
-    /*creazione porti*/
 
    for (i=0;i<SO_PORTI;i++){
          pid = fork();
@@ -279,13 +288,21 @@ int main() {
     take_sem(semid);
     distribuisci_domanda(portArray);
     distribuisci_offerta(portArray);
-    printf("generoso %d\n",porto_generoso(portArray,0));
-    printf("avido %d\n",porto_avido(portArray,0));
+    tmp = &portArray[porto_generoso(portArray,0)];
+    printf("generoso %d con %d\n",tmp->ordinativo,tmp->statistiche.merci_disponibili);
+    if (porto_avido(portArray,0)==-1){
+        printf("nessuno vuole la merce\n");
+    } else{
+        tmp = &portArray[porto_avido(portArray,0)];
+        printf("avido %d con %d\n",tmp->ordinativo,tmp->mercato.domanda[0]);
+    }
+
     release_sem(semid);
 
+    /*segnale che fa partire tutti nello stesso omento, lhandler stara prima del while*/
 
 
-
+    /*
     for (i=0;i<SO_NAVI;i++){
         pid_t pid = fork();
         pids[i+SO_PORTI] = pid;
@@ -299,29 +316,35 @@ int main() {
             default:
                 break;
         }
-    }
-    sleep(3);
+    }*/
+    sleep(5);
     for (j = 0; j <SO_DAYS ; j++) {
-
+        Dump mainDump = {0,0,0,0,0,0,0,0};
         sleep(1);
-
-        for (i = 0; i <(SO_NAVI+SO_PORTI) ; i++) {
-            kill(pids[i],SIGUSR1);
-        }
         take_sem(semid);
-        for (i = 0; i < compute_active_ports(portArray) ; i++) {
-            DumpPorto msg ;
-            while (1){
-                if (msgrcv(msqid, &msg, (sizeof(DumpPorto)- sizeof(long)), 0, 0)!=-1){
+        for (i = 0; i < (SO_PORTI); i++) {
+            kill(portArray[i].pid, SIGUSR1);
+        }
+        release_sem(semid);
+        take_sem(semid);
+        for (i = 0; i < compute_active_ports(portArray); i++) {
+            DumpPorto msg;
+            while (1) {
+                int z = msgrcv(msqid, &msg, (sizeof(DumpPorto)), 1, 0);
+                if (z != -1) {
                     break;
                 }
             }
-            printf("banchine %d\n",msg.banchine_occupate);
+            mainDump.merci_in_un_porto += msg.merci_disponibili;
+            mainDump.merce_scaduta_in_porto += msg.merci_perdute;
+            mainDump.merce_consegnata += msg.merci_ricevute;
+
         }
+        printf("Day %d\n", j);
+        printf("Merci in un porto %d |", mainDump.merci_in_un_porto);
+        printf("Merce consegnata %d |", mainDump.merce_consegnata);
+        printf("Merce scaduta in porto %d\n", mainDump.merce_scaduta_in_porto);
     }
-
-
-    sleep(SO_DAYS*2);
 
     destroy_port_sem(portArray);
     shmdt(portArray);
@@ -341,15 +364,5 @@ int main() {
 
 
 
-
     return 0;
 }
-
-
-
-
-
-
-
-
-
