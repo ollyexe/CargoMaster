@@ -12,8 +12,10 @@
 #include <sys/shm.h>
 #include <semaphore.h>
 #include <sys/sem.h>
+#include <signal.h>
 
 
+sig_atomic_t receivedSignal = 0;
 
 Nave crea_nave(){
     Nave result;
@@ -30,6 +32,9 @@ Nave crea_nave(){
     return result;
 }
 
+
+
+
 void init_matrice_merce(Nave *nave){
     int i;
     for (i = 0; i < SO_MERCI; i++) {
@@ -39,9 +44,6 @@ void init_matrice_merce(Nave *nave){
         }
     }
 }
-
-
-
 
 void carica_merce(Nave *nave, int tipo, int quantita, int vita) {
 
@@ -60,6 +62,7 @@ void carica_merce(Nave *nave, int tipo, int quantita, int vita) {
     nanosleep(&delay,NULL);
 
 }
+
 
 void scarica_merce(Nave *nave, int tipo, int quantita, int vita) {
 
@@ -80,6 +83,7 @@ void scarica_merce(Nave *nave, int tipo, int quantita, int vita) {
 }
 
 
+
 int is_piena(Nave nave) {
     int i;
     int sum = 0;
@@ -95,8 +99,6 @@ int is_piena(Nave nave) {
         }
     return 0;
 }
-
-
 
 void sposta_nave(Nave *nave, Porto porto) {
     int distanza = abs(sqrt(pow((porto.coordinate.longitudine -nave->coordinate.longitudine), 2) + pow(( porto.coordinate.latitudine-nave->coordinate.latitudine), 2)));
@@ -122,7 +124,7 @@ int port_array_attach( ){
     key_t portArrayKey = ftok(masterPath, 'p');
     int portArraySMID = shmget(portArrayKey, SO_PORTI* sizeof(Porto), IPC_EXCL | 0666);/*id della shared memory*/
     if (portArraySMID < 0) {
-        perror("shmget");
+        perror("shmget nave port array");
         exit(EXIT_FAILURE);
     }
     return portArraySMID;
@@ -133,16 +135,17 @@ int * port_array_index_attach() {
     int portArrayIndexSHMID = shmget(portArrayIndexId,sizeof(int),IPC_EXCL | 0666);
     int * portArrayIndex = shmat(portArrayIndexSHMID, NULL, 0);
     if (portArrayIndexSHMID < 0) {
-        perror("shmget");
+        perror("shmget nave port index");
         exit(EXIT_FAILURE);
     }
     return portArrayIndex;
 }
 
+
+
 int calcola_spazio_disponibile(Nave nave){
     return SO_CAPACITY- nave.statistiche.merci_disponibili;
 }
-
 
 
 int sum_merce_(int arr[SO_MERCI][SO_MAX_VITA]){
@@ -153,8 +156,6 @@ int sum_merce_(int arr[SO_MERCI][SO_MAX_VITA]){
     }
     return result;
 }
-
-
 int is_port_eligible(Porto porto, Nave nave){
     int i;
     for (i = 0; i < SO_MERCI; i++) {
@@ -167,6 +168,10 @@ int is_port_eligible(Porto porto, Nave nave){
     }
     return 0;
 }
+
+
+
+
 int chose_port(Porto * portArray, Nave nave){
     int i;
     int best_port = -1;
@@ -185,8 +190,6 @@ int chose_port(Porto * portArray, Nave nave){
     }
     return best_port;
 }
-
-
 
 
 void negozia_scarica(Porto *porto, Nave *nave) {
@@ -273,9 +276,7 @@ void negozia_scarica(Porto *porto, Nave *nave) {
 
     }
 
-    printf("Scaricato e caricato con successo.\n");
 }
-
 
 void check_scadenza_nave(Nave *nave) {
     int i ,merci_scadute=0;
@@ -319,45 +320,34 @@ void check_scadenza_porto(Porto *porto) {
     porto->statistiche.merci_perdute += merci_scadute;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+void signalHandler(int signum) {
+    if (signum == SIGUSR1) {
+        receivedSignal = 1;
+    }
+}
+void init_sigaction(struct sigaction *sa, void (*handler)(int)) {
+    sa->sa_handler = handler;
+    sa->sa_flags = 0;
+    sigemptyset(&sa->sa_mask);
+    sigaction(SIGUSR1, sa, NULL);
+}
 
 
 
 int main(){
     Nave nave;
-    int semid = semget(getppid(), 1,  IPC_EXCL | 0666), porto_to_go, current_day = 0;
+    int semid = semget(1000, 1,  IPC_EXCL | 0666), porto_to_go, current_day = 0;
     Porto porto;
     Porto * portArray;
+    struct sigaction sa;
+    int flag_signal = 0;
+    init_sigaction(&sa, signalHandler);
     if (semid == -1) {
-        perror("semget");
+        perror("semget porto array in nave");
         exit(EXIT_FAILURE);
     }
     seedRandom();
     nave = crea_nave();
-
 
 
     while (current_day<SO_DAYS){
@@ -366,26 +356,24 @@ int main(){
         portArray = shmat(port_array_attach(), NULL, 0);
         porto_to_go = chose_port(portArray,nave);
         porto = portArray[porto_to_go];
-        printf("before banchine %d\n", semctl(porto.sem_id,0,GETVAL));
         take_sem_banc(porto.sem_id);
-        printf("aftere banchine %d\n", semctl(porto.sem_id,0,GETVAL));
-        check_scadenza_porto(&porto);/*to be done by master god*/
         sposta_nave(&nave, porto);
         negozia_scarica(&porto, &nave);
         portArray[porto_to_go] = porto;
         release_sem_banc(porto.sem_id);
         shmdt(portArray);
         release_sem(semid);
+        while (!receivedSignal ) {
+            pause();
+        }
+        receivedSignal = 0;
         current_day++;
+
+
 
     }
 
 }
-
-
-
-
-
 
 
 

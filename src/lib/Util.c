@@ -7,11 +7,12 @@
 
 void seedRandom() {
     struct timespec ts;
+    unsigned long seed;
     if (clock_gettime(CLOCK_REALTIME, &ts) == -1) {
         perror("clock_gettime");
         exit(1);
     }
-    unsigned long seed = ((unsigned long)ts.tv_sec * 1000000000) + ts.tv_nsec;
+    seed = ((unsigned long)ts.tv_sec * 1000000000) + ts.tv_nsec;
     srand(ts.tv_nsec+seed);
 
 }
@@ -43,8 +44,8 @@ void take_sem_banc(int sem_id) {
 
 
     if (semop(sem_id, &semaphore_operation, 1) == -1) {
+        printf("sem val  %d ", semctl(sem_id,0,GETVAL)) ;
         perror("semop banchine take ");
-        exit(EXIT_FAILURE);
     }
 }
 
@@ -105,4 +106,5 @@ int get_nano_sec(){
     }
     return ts.tv_nsec;
 }
+
 

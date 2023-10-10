@@ -1,11 +1,11 @@
 Dump
 	al trascorrere di ogni giorno(secondo) viene stampato un log con:
-		-stao merci(totali):
-			• merce presente in un porto (disponibile per il carico)
-			• merce presente su una nave
-			• merce consegnata ad un porto che la richiede
-			• merce scaduta in porto
-			• merce scaduta in nave
+		-stato merci(totali):
+			• merce presente in un porto (disponibile per il carico)--
+			• merce presente su una nave---
+			• merce consegnata ad un porto che la richiede----
+			• merce scaduta in porto---
+			• merce scaduta in nave----
 		-numero di navi:
 			• in mare con un carico a bordo,
 			• in mare senza un carico

@@ -13,6 +13,7 @@ LIB_SRCS = $(wildcard $(LIB_DIR)/*.c)
 NAVE_SRC = $(SRC_DIR)/lib/Nave.c
 PORTO_SRC = $(SRC_DIR)/lib/Porto.c
 UTIL_SRC = $(SRC_DIR)/lib/Util.c
+DUMP_SRC = $(SRC_DIR)/lib/Dump.c
 MASTER_SRC = $(SRC_DIR)/Master.c
 
 # List of object files
@@ -21,6 +22,7 @@ NAVE_OBJ = $(BIN_DIR)/Nave.o
 PORTO_OBJ = $(BIN_DIR)/Porto.o
 MASTER_OBJ = $(BIN_DIR)/Master.o
 UTIL_OBJ = $(BIN_DIR)/Util.o
+DUMP_OBJ = $(BIN_DIR)/Dump.o
 
 # Names of the final executables
 NAVE_EXEC = $(PROCESSI_DIR)/nave

@@ -7,9 +7,10 @@
 #include <sys/shm.h>
 #include "include/Porto.h"
 #include <sys/sem.h>
-#include <time.h>
+#include <signal.h>
 #include <sys/wait.h>
-
+#include <sys/msg.h>
+#include "include/Dump.h"
 
 
 void printStart(){
@@ -197,7 +198,6 @@ void destroy_port_sem(Porto *port_array) {
     int i;
     for(i = 0; i < SO_PORTI; i++) {
         Porto *porto = &port_array[i];
-        printf("%d\n",porto->sem_id);
         if (semctl(porto->sem_id,0 ,IPC_RMID)==-1){
             printf("sono nr %d \n",port_array[i].ordinativo);
             perror("semdest port");
@@ -214,19 +214,36 @@ void destroy_shm(int shm_id){
     }
 }
 
+int compute_active_ports(Porto *array){
+    int i;
+    int active_ports = 0;
+    for (i = 0; i < SO_PORTI; i++) {
+        if(array[i].ordinativo != 1){
+            active_ports++;
+        }
+    }
+    return active_ports;
+}
+
+
 
 
 int main() {
 
-    int i,sem_id,pid,status;
+    int i,j,pid,pids[SO_PORTI+SO_NAVI];
     char *argv[] = { NULL},*envp[] = {NULL};
-    struct sembuf operation;
     key_t portArrayKey = ftok(masterPath, 'p'),portArrayIndexKey= ftok(masterPath, 'i');
     int portArraySHMID = shmget(portArrayKey, SO_PORTI * sizeof(Porto), IPC_CREAT  | 0666),portArrayIndexSHMID = shmget(portArrayIndexKey, sizeof(int), IPC_CREAT  | 0666);/*id della shared memory*/
     Porto * portArray = shmat(portArraySHMID, NULL, 0);
     int * portArrayIndex = shmat(portArrayIndexSHMID, NULL, 0);
-    int semid = semget((key_t)getpid(), 1, IPC_CREAT  | 0666);
+    int semid = semget(1000, 1, IPC_CREAT  | 0666),dump_sem_id= semget(1001, 1, IPC_CREAT | 0666);
     struct sembuf sem_op;
+    int msqid = msgget(4000, IPC_CREAT | 0666);
+    if (semctl(dump_sem_id, 0, SETVAL, SO_PORTI+SO_NAVI+1) == -1) {
+        perror("semop porti init");
+        exit(EXIT_FAILURE);
+    }
+
 
     if (semid == -1) {
         perror("semget");
@@ -244,8 +261,9 @@ int main() {
 
     /*creazione porti*/
 
-    for (i=0;i<SO_PORTI;i++){
+   for (i=0;i<SO_PORTI;i++){
          pid = fork();
+         pids[i] = pid;
         switch (pid){
             case -1:
                 perror("fork");
@@ -270,6 +288,7 @@ int main() {
 
     for (i=0;i<SO_NAVI;i++){
         pid_t pid = fork();
+        pids[i+SO_PORTI] = pid;
         switch (pid){
             case -1:
                 perror("fork");
@@ -281,13 +300,28 @@ int main() {
                 break;
         }
     }
+    sleep(3);
+    for (j = 0; j <SO_DAYS ; j++) {
 
-    /*ogni giorno si controlla che ogni porto sia ancora operativo(ha della merce in domanda) se nomette l'ordinativo a -1 che è segno di esser morto*/
+        sleep(1);
+
+        for (i = 0; i <(SO_NAVI+SO_PORTI) ; i++) {
+            kill(pids[i],SIGUSR1);
+        }
+        take_sem(semid);
+        for (i = 0; i < compute_active_ports(portArray) ; i++) {
+            DumpPorto msg ;
+            while (1){
+                if (msgrcv(msqid, &msg, (sizeof(DumpPorto)- sizeof(long)), 0, 0)!=-1){
+                    break;
+                }
+            }
+            printf("banchine %d\n",msg.banchine_occupate);
+        }
+    }
 
 
-
-
-    sleep(10);
+    sleep(SO_DAYS*2);
 
     destroy_port_sem(portArray);
     shmdt(portArray);
@@ -303,7 +337,6 @@ int main() {
     }
     take_sem(semid);
     destroy_sem(semid);
-
 
 
 
