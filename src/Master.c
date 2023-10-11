@@ -73,7 +73,7 @@ void genera_merce(Mercato *mercato,int quota_merce){
             }
             while(1){
                 vita = getRandomNumber(SO_MIN_VITA, SO_MAX_VITA);
-                if(vita= SO_MAX_VITA-1){
+                if(vita != SO_MAX_VITA){
                     break;
                 }
             }
@@ -95,7 +95,7 @@ void genera_merce(Mercato *mercato,int quota_merce){
         quantita = X-full_quota;
         vita = getRandomNumber(SO_MIN_VITA, SO_MAX_VITA-1);
         mercato->offerta[tipo][vita] += quantita;
-        full_quota += quantita;
+
     }
 
 }
@@ -170,9 +170,8 @@ void distribuisci_offerta(Porto *porto){
     if(offerta > 0){
         int random_porto = getRandomNumber(0,SO_PORTI-1);
         Porto * attuale = &porto[random_porto];
-        genera_merce(&attuale->mercato,SO_FILL-offerta);
-        attuale->statistiche.merci_disponibili += (SO_FILL-offerta);
-        offerta -= (SO_FILL-offerta);
+        genera_merce(&attuale->mercato,offerta);
+        attuale->statistiche.merci_disponibili += (offerta);
     }
 }
 
@@ -195,7 +194,7 @@ int porto_generoso(Porto *porto,int merce){
 int porto_avido(Porto *porto,int merce){
     int i;
     int avido = -1;
-    int max = 0;
+    int max = 1;
     for (i = 0; i < SO_PORTI; i++) {
         Porto attuale = porto[i];
         if(attuale.mercato.domanda[i] > max){
@@ -231,7 +230,7 @@ int compute_active_ports(Porto *array){
     int i;
     int active_ports = 0;
     for (i = 0; i < SO_PORTI; i++) {
-        if(array[i].ordinativo != 1){
+        if(array[i].ordinativo != -1){
             active_ports++;
         }
     }
@@ -326,7 +325,6 @@ int main() {
             kill(portArray[i].pid, SIGUSR1);
         }
         release_sem(semid);
-        take_sem(semid);
         for (i = 0; i < compute_active_ports(portArray); i++) {
             DumpPorto msg;
             while (1) {

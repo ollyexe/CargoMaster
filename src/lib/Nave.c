@@ -209,8 +209,6 @@ void negozia_scarica(Porto *porto, Nave *nave) {
 
                     } else if (nave->matrice_merce[tipo][scadenza] > porto->mercato.domanda[tipo]){/*meno domanda che merce in nave*/
                         int merce_scaricata = porto->mercato.domanda[tipo];
-                        nave->statistiche.merci_disponibili -= merce_scaricata;
-                        nave->statistiche.merci_scaricate += merce_scaricata;
                         porto->statistiche.merci_disponibili += merce_scaricata;
                         porto->statistiche.merci_ricevute += merce_scaricata;
 
@@ -218,8 +216,6 @@ void negozia_scarica(Porto *porto, Nave *nave) {
                         scarica_merce(nave,tipo,merce_scaricata,scadenza);
                         porto->mercato.domanda[tipo] =0;
                     } else{/*merce e domanda coincidono*/
-                        nave->statistiche.merci_disponibili -= nave->matrice_merce[tipo][scadenza];
-                        nave->statistiche.merci_scaricate += nave->matrice_merce[tipo][scadenza];
                         porto->statistiche.merci_disponibili += nave->matrice_merce[tipo][scadenza];
                         porto->statistiche.merci_ricevute += nave->matrice_merce[tipo][scadenza];
 
