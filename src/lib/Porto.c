@@ -62,16 +62,6 @@ Porto crea_porto_special(double longitudine, double latitudine) {
     return result;
 }
 
-int merci_in_domanada(Mercato mercato){
-    int i;
-    int result = 0;
-    for (i = 0; i < SO_MERCI; i++) {
-        if(mercato.domanda[i] != 0){
-            result ++;
-        }
-    }
-    return result;
-}
 
 void init_matrice_offerta(Porto *porto){
     int i,k;
@@ -85,85 +75,12 @@ void init_matrice_offerta(Porto *porto){
 
 }
 
-void genera_merce(Mercato *mercato) {
-    int n = 0;
-    int X = (SO_FILL/SO_NAVI); /*distribuisco equamente la merce tra tutte le navi*/
-    int ratio_merce_x_tipo = X / (SO_MERCI-merci_in_domanada(*mercato));
-    int full_quota=0;
 
-    for (n; n< (SO_MERCI-merci_in_domanada(*mercato)) ; n++) {
-        int sum=0;
-        int tipo =-1;
-        while (tipo==-1){
-            tipo = getRandomNumber(0,SO_MERCI-1);
-            if(mercato->domanda[tipo] != 0){
-                tipo = -1;
-            }
-        }
-
-           while (sum < ratio_merce_x_tipo){
-               int quantita,vita;
-
-               if((ratio_merce_x_tipo - sum) >= SO_SIZE){
-                   quantita = getRandomNumber(1, SO_SIZE);
-               } else{
-                   quantita = getRandomNumber(1, ratio_merce_x_tipo - sum);
-               }
-
-               vita = getRandomNumber(SO_MIN_VITA, SO_MAX_VITA-1);
-               mercato->offerta[tipo][vita] += quantita;
-               full_quota += quantita;
-               sum += quantita;
-           }
-        printf("%d\n",sum);
-
-    }
-    if(full_quota<X){
-        int tipo =-1,vita,quantita;
-        while (tipo==-1){
-            tipo = getRandomNumber(0,SO_MERCI-1);
-            if(mercato->domanda[tipo] != 0){
-                tipo = -1;
-            }
-        }
-        quantita = X-full_quota;
-        vita = getRandomNumber(SO_MIN_VITA, SO_MAX_VITA-1);
-        mercato->offerta[tipo][vita] += quantita;
-        full_quota += quantita;
-    }
-
-}
-
-void genera_domanda(Mercato *mercato) {
-    int n = getRandomNumber(1,SO_MERCI-3);/*merci su cui generare domanda*/
-    int X = (SO_FILL/SO_PORTI); /*distribuisco equamente la domanda tra tutti i porti*/
-    int j=0,sum =0;
-
-    for (j ; j < n; ++j) {
-       int tipo = getRandomNumber(0,SO_MERCI-1);
-        if(j<n-2){
-
-            int quantita;
-            if(sum == X){
-                break;
-            }
-            quantita = getRandomNumber(1, X - sum );
-            mercato->domanda[tipo] += quantita;
-            sum += quantita;
-        } else{
-            if(sum!=X){
-                int quantita = X-sum;
-                mercato->domanda[tipo] += quantita;
-                sum+=quantita;
-            }
-        }
-    }
-
-
-}
 
 void crea_mercato(Porto *porto) {
     init_matrice_offerta(porto);
+    distribuisci_domanda(porto);
+    distribuisci_offerta(porto);
 }
 
 void stampa_porto(Porto porto) {
@@ -204,6 +121,7 @@ int * port_array_index_attach(){
     }
     return portArrayIndex;
 }
+
 void check_scadenza_porto(Porto *porto) {
     int i, merci_scadute = 0;
 
@@ -227,6 +145,126 @@ void check_scadenza_porto(Porto *porto) {
     porto->statistiche.merci_perdute += merci_scadute;
 }
 
+int calcola_domanda_totale(Porto *array,int index){
+    int i,result = 0;
+    for (i = 0; i < index; i++) {
+        result += sum_array(array[i].mercato.domanda,SO_MERCI);
+    }
+    return result;
+}
+
+void genera_domanda(Porto *porto,int merci_in_domanda_da_generare,int numero_merci) {
+    int n = merci_in_domanda_da_generare;/*merci su cui generare domanda*/
+    int X = numero_merci;
+    int j=0,sum =0;
+
+    for (j ; j < n; ++j) {
+        int tipo = getRandomNumber(0,SO_MERCI-1);
+        if(j<n-2){
+
+            int quantita;
+            if(sum == X){
+                break;
+            }
+            quantita = getRandomNumber(1, X - sum );
+            porto->mercato.domanda[tipo] += quantita;
+            sum += quantita;
+        } else{
+            if(sum!=X){
+                int quantita = X-sum;
+                porto->mercato.domanda[tipo] += quantita;
+                sum+=quantita;
+            }
+        }
+    }
+
+
+}
+
+void distribuisci_domanda(Porto *porto){
+    int  index = *port_array_index_attach();
+    int domanda_rimanente = SO_FILL-calcola_domanda_totale(shmat(port_array_attach(), NULL, 0),index);
+    int merci_in_domanda = getRandomNumber(1,SO_MERCI);/*per avere almeno 1 merce in offerta*/
+    int quota_merci = getRandomNumber(1,domanda_rimanente-SO_PORTI-index);
+    if(index==SO_PORTI-1){
+        quota_merci = domanda_rimanente;
+    }
+    genera_domanda(porto,merci_in_domanda,quota_merci);
+}
+
+int calcola_offerta_totale(Porto *array,int index){
+    int i,result = 0;
+    for (i = 0; i < index; i++) {
+        int j;
+        for ( j= 0; j <SO_MERCI ; j++) {
+            result += sum_array(array[i].mercato.offerta[j],SO_MAX_VITA);
+        }
+    }
+    return result;
+}
+
+int merci_in_domanada(Mercato mercato){
+    int i;
+    int result = 0;
+    for (i = 0; i < SO_MERCI; i++) {
+        if(mercato.domanda[i] != 0){
+            result ++;
+        }
+    }
+    return result;
+}
+
+void genera_merce(Porto *porto,int quota_merce){
+    int n = 0;
+    int X = quota_merce;
+    int ratio_merce_x_tipo = X / (SO_MERCI-merci_in_domanada(porto->mercato));
+    int full_quota=0;
+
+    for (n; n< (SO_MERCI-merci_in_domanada(porto->mercato)) ; n++) {
+        int sum=0;
+        int tipo =-1;
+        while (tipo==-1){
+            tipo = getRandomNumber(0,SO_MERCI-1);
+            if(porto->mercato.domanda[tipo] != 0){
+                tipo = -1;
+            }
+        }
+
+        while (sum < ratio_merce_x_tipo){
+            int quantita,vita;
+
+            if((ratio_merce_x_tipo - sum) >= SO_SIZE){
+                quantita = getRandomNumber(1, SO_SIZE);
+            } else{
+                quantita = getRandomNumber(1, ratio_merce_x_tipo - sum);
+            }
+            while(1){
+                vita = getRandomNumber(SO_MIN_VITA, SO_MAX_VITA);
+                if(vita != SO_MAX_VITA){
+                    break;
+                }
+            }
+
+            porto->mercato.offerta[tipo][vita] += quantita;
+            full_quota += quantita;
+            sum += quantita;
+        }
+
+    }
+
+}
+
+void distribuisci_offerta(Porto *porto){
+    int  index = *port_array_index_attach();
+    int offerta_rimanente = SO_FILL-calcola_offerta_totale(shmat(port_array_attach(), NULL, 0),index);
+    int quota_merci = getRandomNumber(1,offerta_rimanente-(SO_PORTI-index));
+    if(index==SO_PORTI-1){
+        quota_merci = offerta_rimanente;
+    }
+    genera_merce(porto,quota_merci);
+    porto->statistiche.merci_disponibili += quota_merci;
+}
+
 
 
 void signalHandler(int signum) {
@@ -246,8 +284,8 @@ void init_sigaction(struct sigaction *sa, void (*handler)(int)) {
 int main() {
     int * index = port_array_index_attach();
     Porto *array = shmat(port_array_attach(), NULL, 0);
-    int semid = semget(1000, 1,IPC_EXCL | 0666),i=0,local_index = *index;
-    Porto *porto ;
+    int semid = semget(1000, 1,IPC_EXCL | 0666),i=0;
+    Porto porto ;
     DumpPorto dumpPorto;
     struct sigaction sa;
     int msqid = msgget((key_t)1234, IPC_EXCL | 0666);
@@ -262,6 +300,7 @@ int main() {
         case 0:
             array[*index]=crea_porto_special(0,0);
             array[*index].ordinativo = *index;
+
             break;
             case 1:
                 array[*index]=crea_porto_special(0,SO_LATO);
@@ -279,28 +318,32 @@ int main() {
             array[*index] = crea_porto();
             array[*index].ordinativo = *index;
     }
+    porto = array[*index];
     *index = *index +1;
+    shmdt(index);
+    shmdt(array);
     release_sem(semid);
     while (i<SO_DAYS){
-        printf("porto %d| merci %d\n\n",local_index,array[local_index].statistiche.merci_disponibili);
-        porto = &array[local_index];
-        sleep(1);
         take_sem(semid);
-        check_scadenza_porto(&porto);
-        array[local_index] = *porto;
+        array = shmat(port_array_attach(), NULL, 0);
+        check_scadenza_porto(&array[porto.ordinativo]);
+        porto = array[porto.ordinativo];
+        shmdt(array);
         release_sem(semid);
+        printf("porto %d| merci %d\n\n",porto.ordinativo,porto.statistiche.merci_disponibili);
+        sleep(1);
 
         while (!receivedSignal) {
             pause();
         }
 
         dumpPorto.mtype = 1;
-        dumpPorto.banchine_occupate = porto->banchine- semctl(porto->sem_id,0,GETVAL);
-        dumpPorto.merci_disponibili = porto->statistiche.merci_disponibili;
-        dumpPorto.merci_perdute = porto->statistiche.merci_perdute;
-        dumpPorto.merci_ricevute = porto->statistiche.merci_ricevute;
-        dumpPorto.merci_spedite = porto->statistiche.merci_spedite;
-        printf("porto %d: %d|%d|%d|%d|%d\n",porto->ordinativo,dumpPorto.merci_disponibili,dumpPorto.merci_ricevute,dumpPorto.merci_spedite,dumpPorto.merci_perdute,dumpPorto.banchine_occupate);
+        dumpPorto.banchine_occupate = porto.banchine- semctl(porto.sem_id,0,GETVAL);
+        dumpPorto.merci_disponibili = porto.statistiche.merci_disponibili ;
+        dumpPorto.merci_perdute = porto.statistiche.merci_perdute;
+        dumpPorto.merci_ricevute = porto.statistiche.merci_ricevute;
+        dumpPorto.merci_spedite = porto.statistiche.merci_spedite;
+        printf("porto %d: %d|%d|%d|%d|%d\n",porto.ordinativo,dumpPorto.merci_disponibili,dumpPorto.merci_ricevute,dumpPorto.merci_spedite,dumpPorto.merci_perdute,dumpPorto.banchine_occupate);
         if (msgsnd(msqid, &dumpPorto, sizeof(DumpPorto), 0) == -1) {
             perror("msgsnd");
             printf("%d\n",errno);

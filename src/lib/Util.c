@@ -68,16 +68,29 @@ void release_sem_banc(int sem_id) {
 
 void take_sem(int sem_id) {
 
+    struct sembuf semaphore_operation;
 
-    if (semctl(sem_id,0,SETVAL,0) == -1) {
-        perror("semop  take");
+    semaphore_operation.sem_num = 0;
+    semaphore_operation.sem_op = -1;
+    semaphore_operation.sem_flg = 0;
+
+
+    if (semop(sem_id, &semaphore_operation, 1) == -1) {
+        perror("semop release");
         exit(EXIT_FAILURE);
     }
 }
 
 void release_sem(int sem_id) {
-    if (semctl(sem_id,0,SETVAL,1) == -1) {
-        perror("semop release");
+    struct sembuf semaphore_operation;
+
+    semaphore_operation.sem_num = 0;
+    semaphore_operation.sem_op = 1;
+    semaphore_operation.sem_flg = 0;
+
+
+    if (semop(sem_id, &semaphore_operation, 1) == -1) {
+        perror("semop you release");
         exit(EXIT_FAILURE);
     }
 }

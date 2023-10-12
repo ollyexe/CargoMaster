@@ -1,6 +1,3 @@
-
-#!/bin/bash
-
 ME=`whoami`
 
 IPCS_S=`ipcs -s | egrep "0x[0-9a-f]+ [0-9]+" | grep $ME | cut -f2 -d" "`
@@ -19,3 +16,5 @@ done
 for id in $IPCS_Q; do
   ipcrm -q $id;
 done
+
+bash kill_pc.sh

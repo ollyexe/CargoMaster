@@ -8,7 +8,6 @@
 #include "include/Porto.h"
 #include <sys/sem.h>
 #include <signal.h>
-#include <sys/wait.h>
 #include <sys/msg.h>
 #include "include/Dump.h"
 
@@ -100,58 +99,9 @@ void genera_merce(Mercato *mercato,int quota_merce){
 
 }
 
-void genera_domanda(Mercato *mercato,int merci_in_domanda_da_generare,int numero_merci) {
-    int n = merci_in_domanda_da_generare;/*merci su cui generare domanda*/
-    int X = numero_merci;
-    int j=0,sum =0;
-
-    for (j ; j < n; ++j) {
-        int tipo = getRandomNumber(0,SO_MERCI-1);
-        if(j<n-2){
-
-            int quantita;
-            if(sum == X){
-                break;
-            }
-            quantita = getRandomNumber(1, X - sum );
-            mercato->domanda[tipo] += quantita;
-            sum += quantita;
-        } else{
-            if(sum!=X){
-                int quantita = X-sum;
-                mercato->domanda[tipo] += quantita;
-                sum+=quantita;
-            }
-        }
-    }
 
 
-}
 
-void distribuisci_domanda(Porto *porto){
-    int i,full_sum=0;
-    int porti = SO_PORTI;
-    int domanda = SO_FILL;
-
-    for (i = 0; i < SO_PORTI; i++) {
-        Porto * attuale = &porto[i];
-        int merci_in_domanda = getRandomNumber(1,SO_MERCI);/*per avere almeno 1 merce in offerta*/
-        int quota_merci = getRandomNumber(1,domanda-porti);/* - porti per avere almeno 1 tonnellata in domanda*/
-        if(i==SO_PORTI-1){
-            quota_merci = domanda;
-        }
-        genera_domanda(&attuale->mercato,merci_in_domanda,quota_merci);
-        domanda -= quota_merci;
-        full_sum += sum_array(attuale->mercato.domanda,SO_MERCI);
-        porti--;
-    }
-    if(full_sum != SO_FILL){
-        int random_porto = getRandomNumber(0,SO_PORTI-1);
-        Porto * attuale = &porto[random_porto];
-        genera_domanda(&attuale->mercato,1,SO_FILL-full_sum);
-    }
-
-}
 
 void distribuisci_offerta(Porto *porto){
     int i;
@@ -244,7 +194,7 @@ int main() {
 
     int i,j,pid,pids[SO_PORTI];
     char *argv[] = { NULL},*envp[] = {NULL};
-    key_t portArrayKey = ftok(masterPath, 'p'),portArrayIndexKey= ftok(masterPath, 'i');
+    key_t portArrayKey = ftok(masterPath, 'p'), portArrayIndexKey= ftok(masterPath, 'i');
     int portArraySHMID = shmget(portArrayKey, SO_PORTI * sizeof(Porto), IPC_CREAT  | 0666),portArrayIndexSHMID = shmget(portArrayIndexKey, sizeof(int), IPC_CREAT  | 0666);/*id della shared memory*/
     Porto * portArray = shmat(portArraySHMID, NULL, 0);
     int * portArrayIndex = shmat(portArrayIndexSHMID, NULL, 0);
@@ -267,11 +217,12 @@ int main() {
         exit(EXIT_FAILURE);
     }
     seedRandom();
+    shmdt(portArray);
+    shmdt(portArrayIndex);
 
 
    for (i=0;i<SO_PORTI;i++){
          pid = fork();
-         pids[i] = pid;
         switch (pid){
             case -1:
                 perror("fork");
@@ -284,19 +235,7 @@ int main() {
         }
     }
 
-    take_sem(semid);
-    distribuisci_domanda(portArray);
-    distribuisci_offerta(portArray);
-    tmp = &portArray[porto_generoso(portArray,0)];
-    printf("generoso %d con %d\n",tmp->ordinativo,tmp->statistiche.merci_disponibili);
-    if (porto_avido(portArray,0)==-1){
-        printf("nessuno vuole la merce\n");
-    } else{
-        tmp = &portArray[porto_avido(portArray,0)];
-        printf("avido %d con %d\n",tmp->ordinativo,tmp->mercato.domanda[0]);
-    }
 
-    release_sem(semid);
 
     /*segnale che fa partire tutti nello stesso omento, lhandler stara prima del while*/
 
@@ -319,10 +258,14 @@ int main() {
     sleep(5);
     for (j = 0; j <SO_DAYS ; j++) {
         Dump mainDump = {0,0,0,0,0,0,0,0};
-        sleep(1);
         take_sem(semid);
+        portArraySHMID = shmget(portArrayKey, SO_PORTI * sizeof(Porto), IPC_EXCL  | 0666);
+        portArray = shmat(portArraySHMID, NULL, 0);
+        sleep(1);
+
         for (i = 0; i < (SO_PORTI); i++) {
-            kill(portArray[i].pid, SIGUSR1);
+            Porto actualPort = portArray[i];
+            kill(actualPort.pid, SIGUSR1);
         }
         release_sem(semid);
         for (i = 0; i < compute_active_ports(portArray); i++) {
@@ -338,6 +281,7 @@ int main() {
             mainDump.merce_consegnata += msg.merci_ricevute;
 
         }
+        release_sem(semid);
         printf("Day %d\n", j);
         printf("Merci in un porto %d |", mainDump.merci_in_un_porto);
         printf("Merce consegnata %d |", mainDump.merce_consegnata);

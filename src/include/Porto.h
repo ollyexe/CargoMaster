@@ -33,3 +33,5 @@ Porto crea_porto_special(double longitudine, double latitudine);
 void crea_mercato(Porto * porto);
 int port_array_attach();
 int * port_array_index_attach();
+void distribuisci_domanda(Porto *porto);
+void distribuisci_offerta(Porto *porto);
