@@ -1,7 +1,7 @@
 #ifndef UTIL_H
 #define UTIL_H
 
-#include "../resources/born_to_run.h"
+#include "../resources/p_macros.h"
 #include <stdio.h>
 #include <stdlib.h>
 

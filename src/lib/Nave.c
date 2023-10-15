@@ -3,7 +3,7 @@
 #include <unistd.h>
 #include "../include/Nave.h"
 #include "../include/Util.h"
-#include "../resources/born_to_run.h"
+#include "../resources/p_macros.h"
 #include "../include/Util.h"
 #include "Porto.h"
 #include <math.h>
@@ -13,9 +13,14 @@
 #include <semaphore.h>
 #include <sys/sem.h>
 #include <signal.h>
+#include <sys/msg.h>
+#include "../include/Dump.h"
+#include <errno.h>
 
 
 sig_atomic_t receivedSignal = 0;
+
+sig_atomic_t reportSignal = 0;
 
 Nave crea_nave(){
     Nave result;
@@ -23,17 +28,22 @@ Nave crea_nave(){
     result.coordinate.latitudine = getRandomDouble(0,SO_LATO);
     result.capacita = SO_CAPACITY;
     result.velocita = SO_SPEED;
-    result.stato = 1;
-    result.statistiche.merci_caricate = 0;
-    result.statistiche.merci_disponibili = 0;
-    result.statistiche.merci_perdute = 0;
-    result.statistiche.merci_scaricate = 0;
+    result.stato = 0;
+    init_statistiche_nave(&result);
     init_matrice_merce(&result);
     return result;
 }
 
-
-
+void init_statistiche_nave(Nave *nave){
+    int i;
+    nave->statistiche.merci_disponibili = 0;
+    nave->statistiche.merci_scaricate = 0;
+    nave->statistiche.merci_caricate = 0;
+    nave->statistiche.merci_perdute = 0;
+    for (i = 0; i < SO_MERCI; i++) {
+        nave->statistiche.merci_scadute[i] = 0;
+    }
+}
 
 void init_matrice_merce(Nave *nave){
     int i;
@@ -47,7 +57,7 @@ void init_matrice_merce(Nave *nave){
 
 void carica_merce(Nave *nave, int tipo, int quantita, int vita) {
 
-    int sleep =quantita/nave->velocita;
+    int sleep =quantita/SO_LOADSPEED;
     struct timespec delay;
 
     delay.tv_sec = 0;
@@ -63,10 +73,9 @@ void carica_merce(Nave *nave, int tipo, int quantita, int vita) {
 
 }
 
-
 void scarica_merce(Nave *nave, int tipo, int quantita, int vita) {
 
-    int sleep =quantita/nave->velocita;
+    int sleep =quantita/SO_LOADSPEED;
     struct timespec delay;
 
     delay.tv_sec = 0;
@@ -80,24 +89,6 @@ void scarica_merce(Nave *nave, int tipo, int quantita, int vita) {
     nave->statistiche.merci_scaricate += quantita;
     nanosleep(&delay,NULL);
 
-}
-
-
-
-int is_piena(Nave nave) {
-    int i;
-    int sum = 0;
-    for (i = 0; i < SO_MERCI; i++) {
-        int j;
-        for (j= 0; j <SO_MAX_VITA ; j++) {
-            sum += nave.matrice_merce[i][j];
-            if (sum= SO_CAPACITY) {
-                return 1;
-            }
-        }
-
-        }
-    return 0;
 }
 
 void sposta_nave(Nave *nave, Porto porto) {
@@ -130,23 +121,9 @@ int port_array_attach( ){
     return portArraySMID;
 }
 
-int * port_array_index_attach() {
-    key_t portArrayIndexId= ftok(masterPath, 'i');
-    int portArrayIndexSHMID = shmget(portArrayIndexId,sizeof(int),IPC_EXCL | 0666);
-    int * portArrayIndex = shmat(portArrayIndexSHMID, NULL, 0);
-    if (portArrayIndexSHMID < 0) {
-        perror("shmget nave port index");
-        exit(EXIT_FAILURE);
-    }
-    return portArrayIndex;
-}
-
-
-
 int calcola_spazio_disponibile(Nave nave){
     return SO_CAPACITY- nave.statistiche.merci_disponibili;
 }
-
 
 int sum_merce_(int arr[SO_MERCI][SO_MAX_VITA]){
     int i;
@@ -156,6 +133,7 @@ int sum_merce_(int arr[SO_MERCI][SO_MAX_VITA]){
     }
     return result;
 }
+
 int is_port_eligible(Porto porto, Nave nave){
     int i;
     for (i = 0; i < SO_MERCI; i++) {
@@ -169,25 +147,23 @@ int is_port_eligible(Porto porto, Nave nave){
     return 0;
 }
 
-
-
-
 int chose_port(Porto * portArray, Nave nave){
     int i;
     int best_port = -1;
-    double best_distance = 2147483647;
+    double best_distance = 1450;
     for (i = 0; i < SO_PORTI; i++) {
-        if (portArray[i].ordinativo!=-1){ /*check porto vivo*/
-            double distance = abs(sqrt(pow((portArray[i].coordinate.longitudine -nave.coordinate.longitudine), 2) + pow(( portArray[i].coordinate.latitudine-nave.coordinate.latitudine), 2)));
-            if (distance == 0) {
-                continue; /*caso in cui ha gia scaricato sul porto e sta cambiando*/
-            }
-            if ((distance < best_distance || best_port == -1) && is_port_eligible(portArray[i],nave)==1) {
-                best_distance = distance;
-                best_port = i;
+            if (portArray[i].ordinativo != -1) { /*check porto vivo*/
+                double distance = abs(sqrt(pow((portArray[i].coordinate.longitudine - nave.coordinate.longitudine), 2) +
+                                           pow((portArray[i].coordinate.latitudine - nave.coordinate.latitudine), 2)));
+                if (distance == 0) {
+                    continue; /*caso in cui ha gia scaricato sul porto e sta cambiando*/
+                }
+                if ((distance < best_distance || best_port == -1) && is_port_eligible(portArray[i], nave) == 1) {
+                    best_distance = distance;
+                    best_port = i;
+                }
             }
         }
-    }
     return best_port;
 }
 
@@ -201,23 +177,25 @@ void negozia_scarica(Porto *porto, Nave *nave) {
             if (porto->mercato.domanda[tipo] > 0 && nave->matrice_merce[tipo][scadenza] > 0) {
                     if (nave->matrice_merce[tipo][scadenza] < porto->mercato.domanda[tipo]) {/*piu domanda che merce in nave*/
                         porto->mercato.domanda[tipo] -= nave->matrice_merce[tipo][scadenza];
-                        porto->statistiche.merci_disponibili += nave->matrice_merce[tipo][scadenza];
+                        /*porto->statistiche.merci_disponibili += nave->matrice_merce[tipo][scadenza]; -->merci una volta arrivate non sono disponibili*/
                         porto->statistiche.merci_ricevute += nave->matrice_merce[tipo][scadenza];
-
+                        porto->statistiche.merci_ricevute_per_tipo[tipo] += nave->matrice_merce[tipo][scadenza];
                         /*Contrassegna la merce come scaricata*/
                         scarica_merce(nave,tipo,nave->matrice_merce[tipo][scadenza],scadenza);
 
                     } else if (nave->matrice_merce[tipo][scadenza] > porto->mercato.domanda[tipo]){/*meno domanda che merce in nave*/
                         int merce_scaricata = porto->mercato.domanda[tipo];
-                        porto->statistiche.merci_disponibili += merce_scaricata;
+                        /*porto->statistiche.merci_disponibili += merce_scaricata;*/
                         porto->statistiche.merci_ricevute += merce_scaricata;
+                        porto->statistiche.merci_ricevute_per_tipo[tipo] += nave->matrice_merce[tipo][scadenza];
 
                         /*Contrassegna la merce come scaricata*/
                         scarica_merce(nave,tipo,merce_scaricata,scadenza);
                         porto->mercato.domanda[tipo] =0;
                     } else{/*merce e domanda coincidono*/
-                        porto->statistiche.merci_disponibili += nave->matrice_merce[tipo][scadenza];
+                        /*porto->statistiche.merci_disponibili += nave->matrice_merce[tipo][scadenza];*/
                         porto->statistiche.merci_ricevute += nave->matrice_merce[tipo][scadenza];
+                        porto->statistiche.merci_ricevute_per_tipo[tipo] += nave->matrice_merce[tipo][scadenza];
 
                         /*Contrassegna la merce come scaricata*/
                         porto->mercato.domanda[tipo] = 0;
@@ -241,6 +219,7 @@ void negozia_scarica(Porto *porto, Nave *nave) {
                         porto->statistiche.merci_spedite += porto->mercato.offerta[tipo][scadenza];
                         /*Contrassegna la merce come caricata*/
                         carica_merce(nave,tipo,porto->mercato.offerta[tipo][scadenza],scadenza);
+
                         porto->mercato.offerta[tipo][scadenza] = 0;
 
                     } else if (calcola_spazio_disponibile(*nave) < porto->mercato.offerta[tipo][scadenza] && porto->mercato.offerta[tipo][scadenza] > 0){
@@ -283,6 +262,8 @@ void check_scadenza_nave(Nave *nave) {
             if (j==0){
                 merci_scadute += nave->matrice_merce[i][j];
                 nave->matrice_merce[i][j] = nave->matrice_merce[i][j+1];
+            } else if (j==SO_MAX_VITA-1){
+                nave->matrice_merce[i][j] = 0;
             } else{
                 nave->matrice_merce[i][j] = nave->matrice_merce[i][j+1];
             }
@@ -293,51 +274,30 @@ void check_scadenza_nave(Nave *nave) {
     nave->statistiche.merci_perdute += merci_scadute;
 }
 
-void check_scadenza_porto(Porto *porto) {
-    int i, merci_scadute = 0;
-
-    for (i = 0; i < SO_MERCI; i++) {
-        int j,tmp;
-        tmp = porto->mercato.offerta[i][0];
-
-
-        for (j = 0; j < SO_MAX_VITA; j++) {
-            porto->mercato.offerta[i][j] = porto->mercato.offerta[i][j + 1];
-        }
-
-
-        porto->mercato.offerta[i][SO_MAX_VITA - 1] = 0;
-
-
-        merci_scadute += tmp;
-    }
-
-    porto->statistiche.merci_disponibili -= merci_scadute;
-    porto->statistiche.merci_perdute += merci_scadute;
-}
 
 void signalHandler(int signum) {
     if (signum == SIGUSR1) {
         receivedSignal = 1;
     }
 }
-void init_sigaction(struct sigaction *sa, void (*handler)(int)) {
-    sa->sa_handler = handler;
-    sa->sa_flags = 0;
-    sigemptyset(&sa->sa_mask);
-    sigaction(SIGUSR1, sa, NULL);
+
+void signalHandlerReport(int signum) {
+    if (signum == SIGUSR2) {
+        reportSignal = 1;
+    }
 }
+
 
 
 
 int main(){
     Nave nave;
-    int semid = semget(1000, 1,  IPC_EXCL | 0666), porto_to_go, current_day = 0;
-    Porto porto;
-    Porto * portArray;
-    struct sigaction sa;
-    int flag_signal = 0;
-    init_sigaction(&sa, signalHandler);
+    int semid = semget(1000, 1,  IPC_EXCL | 0666),msqid = msgget((key_t)1234, IPC_EXCL | 0666), porto_to_go, current_day = 0,i;
+    Porto porto,* portArray;
+    DumpNave dumpNave;
+    DumpReportNave dumpReportNave;
+    signal(SIGUSR1, signalHandler);
+    signal(SIGUSR2, signalHandlerReport);
     if (semid == -1) {
         perror("semget porto array in nave");
         exit(EXIT_FAILURE);
@@ -345,22 +305,71 @@ int main(){
     seedRandom();
     nave = crea_nave();
 
+    while (current_day<=SO_DAYS){
+        if (current_day==0){
+            while (!receivedSignal) {
+                pause();
+            }
+            dumpNave.mtype = 2;
+            dumpNave.stato = nave.stato;
+            dumpNave.merce_a_bordo = sum_merce_(nave.matrice_merce);
+            dumpNave.merce_scaduta = nave.statistiche.merci_perdute;
+            if (msgsnd(msqid, &dumpNave, sizeof(DumpNave), 0) == -1) {
+                perror("msgsnd");
+                printf("%d\n",errno);
+                exit(EXIT_FAILURE);
+            }
 
-    while (current_day<SO_DAYS){
-        check_scadenza_nave(&nave);
-        take_sem(semid);
-        portArray = shmat(port_array_attach(), NULL, 0);
-        porto_to_go = chose_port(portArray,nave);
-        porto = portArray[porto_to_go];
-        take_sem_banc(porto.sem_id);
-        sposta_nave(&nave, porto);
-        negozia_scarica(&porto, &nave);
-        portArray[porto_to_go] = porto;
-        release_sem_banc(porto.sem_id);
-        shmdt(portArray);
-        release_sem(semid);
-        while (!receivedSignal ) {
-            pause();
+        } else{
+            while (!receivedSignal) {
+                pause();
+            }
+            check_scadenza_nave(&nave);
+            take_sem(semid);
+            portArray = shmat(port_array_attach(), NULL, 0);
+            porto_to_go = chose_port(portArray,nave);
+            if (porto_to_go==-1){
+                receivedSignal = 0;
+                shmdt(portArray);
+                release_sem(semid);
+                current_day++;
+                dumpNave.mtype = 2;
+                dumpNave.stato = nave.stato;
+                dumpNave.merce_a_bordo = sum_merce_(nave.matrice_merce);
+                dumpNave.merce_scaduta = nave.statistiche.merci_perdute;
+                if (msgsnd(msqid, &dumpNave, sizeof(DumpNave), 0) == -1) {
+                    perror("msgsnd");
+                    printf("%d\n",errno);
+                    exit(EXIT_FAILURE);
+                }
+                continue;
+            }
+
+
+            porto = portArray[porto_to_go];
+            take_sem_banc(porto.sem_id);
+            nave.stato = 2;
+            sposta_nave(&nave, porto);
+            negozia_scarica(&porto, &nave);
+            portArray[porto_to_go] = porto;
+            release_sem_banc(porto.sem_id);
+            if (sum_merce_(nave.matrice_merce) > 0) {
+                nave.stato = 1;
+            } else {
+                nave.stato = 0;
+            }
+            shmdt(portArray);
+            release_sem(semid);
+            dumpNave.mtype = 2;
+            dumpNave.stato = nave.stato;
+            dumpNave.merce_a_bordo = sum_merce_(nave.matrice_merce);
+            dumpNave.merce_scaduta = nave.statistiche.merci_perdute;
+            if (msgsnd(msqid, &dumpNave, sizeof(DumpNave), 0) == -1) {
+                perror("msgsnd");
+                printf("%d\n",errno);
+                exit(EXIT_FAILURE);
+            }
+
         }
         receivedSignal = 0;
         current_day++;
@@ -368,6 +377,22 @@ int main(){
 
 
     }
+
+    while (!reportSignal) {
+        pause();
+    }
+
+    dumpReportNave.mtype = 4;
+    for (i=0;i<SO_MERCI;i++){
+        dumpReportNave.merce_scaduta[i] = porto.statistiche.merci_scadute[i];
+    }
+    if (msgsnd(msqid, &dumpReportNave, sizeof(DumpReportNave), 0) == -1) {
+        perror("msgsnd");
+        printf("%d\n",errno);
+        exit(EXIT_FAILURE);
+    }
+
+    return 0;
 
 }
 

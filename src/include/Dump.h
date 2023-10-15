@@ -24,6 +24,7 @@ typedef struct DumpPorto{
     int merci_spedite;
     int merci_perdute;
     int banchine_occupate;
+    int ordinativo;
 }DumpPorto;
 
 typedef struct DumpNave{
@@ -33,6 +34,25 @@ typedef struct DumpNave{
     int merce_scaduta;
 }DumpNave;
 
-Dump crea_dump();
+typedef struct DumpReportNave{
+    long mtype;
+    int merce_scaduta[SO_MERCI];
+}DumpReportNave;
+
+typedef struct DumpReportPorto{
+    long mtype;
+    int merce_scaduta[SO_MERCI];
+    int merce_ricevuta_per_tipo[SO_MERCI];
+    int merce_rimanente_per_tipo[SO_MERCI];
+}DumpReportPorto;
+
+
+typedef struct ReportMerrce{
+    int merce_scaduta_in_nave[SO_MERCI];
+    int merce_scaduta_in_porto[SO_MERCI];
+    int merce_rimanente_in_porto[SO_MERCI];
+    int merce_consegnata_da_qaulche_nave[SO_MERCI];
+}ReportMerce;
+
 
 #endif  /* DUMP_H */

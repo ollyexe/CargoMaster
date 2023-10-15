@@ -29,7 +29,7 @@ NAVE_EXEC = $(PROCESSI_DIR)/nave
 PORTO_EXEC = $(PROCESSI_DIR)/porto
 MASTER_EXEC = $(PROCESSI_DIR)/master
 
-all: $(NAVE_EXEC) $(PORTO_EXEC) $(MASTER_EXEC)
+all: clean $(NAVE_EXEC) $(PORTO_EXEC) $(MASTER_EXEC)
 
 
 $(BIN_DIR)/%.o: $(LIB_DIR)/%.c
@@ -53,7 +53,7 @@ $(PORTO_EXEC): $(LIB_OBJS) $(PORTO_OBJ) $(UTIL_OBJ)
 $(MASTER_EXEC): $(LIB_OBJS) $(MASTER_OBJ) $(UTIL_OBJ)
 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^ -lm
 
-run :
+run : all
 	./$(MASTER_EXEC)
 
 clean:

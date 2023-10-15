@@ -1,4 +1,4 @@
-#include "../resources/born_to_run.h"
+#include "../resources/p_macros.h"
 #include "../include/Util.h"
 
 struct StatistichePorto{
@@ -7,6 +7,8 @@ struct StatistichePorto{
     int merci_spedite;
     int merci_perdute;
     int banchine_occupate;
+    int merci_scadute[SO_MERCI];
+    int merci_ricevute_per_tipo[SO_MERCI];
 };
 
 typedef struct Mercato{/*sfrutto il fatto che ci sono SO_MERCI tipi di merce*/
@@ -32,6 +34,7 @@ Porto crea_porto();
 Porto crea_porto_special(double longitudine, double latitudine);
 void crea_mercato(Porto * porto);
 int port_array_attach();
+void init_statistiche_porto(Porto *porto);
 int * port_array_index_attach();
 void distribuisci_domanda(Porto *porto);
 void distribuisci_offerta(Porto *porto);
