@@ -32,10 +32,10 @@ int porto_generoso(Porto *porto,int merce){
 int porto_avido(Porto *porto,int merce){
     int i;
     int avido = -1;
-    int max = 1;
+    int max = SO_FILL+1;
     for (i = 0; i < SO_PORTI; i++) {
         Porto attuale = porto[i];
-        if(attuale.mercato.domanda[i] > max){
+        if(attuale.mercato.domanda[i] < max&&attuale.mercato.domanda[i]!=0){
             max = attuale.mercato.domanda[i];
             avido = i;
         }
@@ -68,6 +68,10 @@ int main() {
     memset(quantita_merce_iniziale, 0, sizeof(quantita_merce_iniziale));
     memset(merci_porti_avidi, 0, sizeof(merci_porti_avidi));
     memset(merci_porti_generosi, 0, sizeof(merci_porti_generosi));
+    memset(reportMerce.merce_consegnata_da_qaulche_nave, 0, sizeof(reportMerce.merce_consegnata_da_qaulche_nave));
+    memset(reportMerce.merce_rimanente_in_porto, 0, sizeof(reportMerce.merce_rimanente_in_porto));
+    memset(reportMerce.merce_scaduta_in_nave, 0, sizeof(reportMerce.merce_scaduta_in_nave));
+    memset(reportMerce.merce_scaduta_in_porto, 0, sizeof(reportMerce.merce_scaduta_in_porto));
     if (semid == -1) {
         perror("semget");
         exit(EXIT_FAILURE);
@@ -288,29 +292,32 @@ int main() {
     for (i = 0; i < (SO_NAVI); i++) {
         kill(pids_navi[i], SIGUSR2);
     }
+    release_sem(semid);
 
     for (i = 0; i < SO_NAVI; i++) {
         DumpReportNave msg;
+        int j;
         if (msgrcv(msqid, &msg, (sizeof(DumpReportNave)), 4, 0)==-1){
             perror("msgrcv");
             exit(EXIT_FAILURE);
         }
-        for (current_day = 0; current_day < SO_MERCI; current_day++) {
-            reportMerce.merce_scaduta_in_nave[current_day] = msg.merce_scaduta[current_day];
+        for (j = 0; j < SO_MERCI; j++) {
+            reportMerce.merce_scaduta_in_nave[j] += msg.merce_scaduta[j];
         }
 
     }
 
     for (i = 0; i < SO_PORTI; i++) {
         DumpReportPorto msg;
+        int j;
         if (msgrcv(msqid, &msg, (sizeof(DumpReportPorto)), 3, 0)==-1){
             perror("msgrcv");
             exit(EXIT_FAILURE);
         }
-        for (current_day = 0; current_day < SO_MERCI; current_day++) {
-            reportMerce.merce_scaduta_in_porto[current_day] = msg.merce_scaduta[current_day];
-            reportMerce.merce_rimanente_in_porto[current_day] = msg.merce_rimanente_per_tipo[current_day];
-            reportMerce.merce_consegnata_da_qaulche_nave[current_day] = msg.merce_ricevuta_per_tipo[current_day];
+        for (j = 0; j < SO_MERCI; j++) {
+            reportMerce.merce_scaduta_in_porto[j] += msg.merce_scaduta[j];
+            reportMerce.merce_rimanente_in_porto[j] += msg.merce_rimanente_per_tipo[j];
+            reportMerce.merce_consegnata_da_qaulche_nave[j] += msg.merce_ricevuta_per_tipo[j];
         }
 
     }
@@ -337,8 +344,8 @@ int main() {
         printf("Merce scaduta in nave %d |",reportMerce.merce_scaduta_in_nave[i]);
         printf("Merce rimanente in porto %d |",reportMerce.merce_rimanente_in_porto[i]);
         printf("Merce consegnata da qualche nave %d |",reportMerce.merce_consegnata_da_qaulche_nave[i]);
-        printf("Porto quantita minore %d |",merci_porti_avidi[i]);
-        printf("Porto quantita maggiore %d \n",merci_porti_generosi[i]);
+        printf("Porto domanda* %d |",merci_porti_avidi[i]);
+        printf("Porto offerta* %d \n",merci_porti_generosi[i]);
     }
 
 
@@ -351,6 +358,7 @@ int main() {
     destroy_shm(portArraySHMID);
     destroy_shm(portArrayIndexSHMID);
     destroy_sem(semid);
+    msgctl(msqid, IPC_RMID, NULL);
 
 
 

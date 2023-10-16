@@ -386,7 +386,7 @@ int main(){
     for (i=0;i<SO_MERCI;i++){
         dumpReportNave.merce_scaduta[i] = porto.statistiche.merci_scadute[i];
     }
-    if (msgsnd(msqid, &dumpReportNave, sizeof(DumpReportNave), 0) == -1) {
+    if(msgsnd(msqid, &dumpReportNave, sizeof(DumpReportNave), 0) == -1) {
         perror("msgsnd");
         printf("%d\n",errno);
         exit(EXIT_FAILURE);

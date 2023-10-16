@@ -36,20 +36,6 @@ Porto crea_porto() {
     return result;
 }
 
-void init_statistiche_porto(Porto *porto){
-    int i;
-    porto->statistiche.banchine_occupate = 0;
-    porto->statistiche.merci_spedite = 0;
-    porto->statistiche.merci_disponibili = 0;
-    porto->statistiche.merci_perdute = 0;
-    porto->statistiche.merci_ricevute = 0;
-
-    for (i = 0; i < SO_MERCI; i++) {
-        porto->statistiche.merci_scadute[i] = 0;
-        porto->statistiche.merci_ricevute_per_tipo[i] = 0;
-    }
-}
-
 Porto crea_porto_special(double longitudine, double latitudine) {
     Porto result;
     result.coordinate.longitudine = longitudine;
@@ -63,13 +49,23 @@ Porto crea_porto_special(double longitudine, double latitudine) {
         exit(EXIT_FAILURE);
     }
     semctl(result.sem_id, 0, SETVAL, result.banchine);
-    result.statistiche.banchine_occupate = 0;
-    result.statistiche.merci_spedite = 0;
-    result.statistiche.merci_disponibili = 0;
-    result.statistiche.merci_perdute = 0;
-    result.statistiche.merci_ricevute = 0;
+    init_statistiche_porto(&result);
     crea_mercato(&result);
     return result;
+}
+
+void init_statistiche_porto(Porto *porto){
+    int i;
+    porto->statistiche.banchine_occupate = 0;
+    porto->statistiche.merci_spedite = 0;
+    porto->statistiche.merci_disponibili = 0;
+    porto->statistiche.merci_perdute = 0;
+    porto->statistiche.merci_ricevute = 0;
+
+    for (i = 0; i < SO_MERCI; i++) {
+        porto->statistiche.merci_scadute[i] = 0;
+        porto->statistiche.merci_ricevute_per_tipo[i] = 0;
+    }
 }
 
 
@@ -395,17 +391,28 @@ int main() {
     while (!reportSignal) {
         pause();
     }
+    take_sem(semid);
+    array = shmat(port_array_attach(), NULL, 0);
+    porto = array[porto.ordinativo];
+
     dumpReportPorto.mtype = 3;
     for (i=0;i<SO_MERCI;i++){
         dumpReportPorto.merce_scaduta[i] = porto.statistiche.merci_scadute[i];
         dumpReportPorto.merce_ricevuta_per_tipo[i] = porto.statistiche.merci_ricevute_per_tipo[i];
         dumpReportPorto.merce_rimanente_per_tipo[i] = sum_array(porto.mercato.offerta[i],SO_MAX_VITA);
     }
+    int j;
+    for (j= 0; j <SO_MERCI; j++) {
+        printf("porto %d merce %d scaduta %d\n",porto.ordinativo,j,dumpReportPorto.merce_scaduta[j]);
+    }
+
     if (msgsnd(msqid, &dumpReportPorto, sizeof(DumpReportPorto), 0) == -1) {
         perror("msgsnd");
         printf("%d\n",errno);
         exit(EXIT_FAILURE);
     }
+    shmdt(array);
+    release_sem(semid);
 
     semctl(porto.sem_id,0,IPC_RMID);
 
