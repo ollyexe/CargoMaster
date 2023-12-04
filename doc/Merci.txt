@@ -1,8 +1,0 @@
-Merci
-esistono SO_MERCI tipi di merci identificate con un int
-	Ogni lotto:
-		-nasce con una quantità 1-SO_SIZE 
-		-con un tempo definito randomico fra SO_MIN_VITA e SO_MAX_VITA
-
-	Features:
-		-le merci che si trovano nelle navi/porti che scadono vengono perse(svaniscono)

@@ -58,6 +58,6 @@ run : all
 
 clean:
 	rm -rf $(BIN_DIR)/*.o $(PROCESSI_DIR)/*
-rmIPC:
-	ipcrm -m 0
+kill:
+	bash kill.sh
 

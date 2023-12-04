@@ -43,10 +43,7 @@ void take_sem_banc(int sem_id) {
     semaphore_operation.sem_flg = 0;
 
 
-    if (semop(sem_id, &semaphore_operation, 1) == -1) {
-        printf("SEMVAL %d \n", semctl(sem_id, 0, GETVAL));
-        perror("semop banchine take ");
-    }
+   semop(sem_id, &semaphore_operation, 1);
 }
 
 void release_sem_banc(int sem_id) {
@@ -57,9 +54,7 @@ void release_sem_banc(int sem_id) {
     semaphore_operation.sem_flg = 0;
 
 
-    if (semop(sem_id, &semaphore_operation, 1) == -1) {
-        perror("semop banchine release");
-    }
+    semop(sem_id, &semaphore_operation, 1);
 }
 
 
@@ -72,9 +67,7 @@ void take_sem(int sem_id) {
     semaphore_operation.sem_flg = 0;
 
 
-    if (semop(sem_id, &semaphore_operation, 1) == -1) {
-        perror("semop release");
-    }
+   semop(sem_id, &semaphore_operation, 1);
 }
 
 void release_sem(int sem_id) {

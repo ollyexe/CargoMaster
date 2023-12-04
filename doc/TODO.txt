@@ -1,9 +1,0 @@
--gestione giorni
-     -check porto morto
-     -check scadenze
-
--gestione DUMP
-     -uso di msqueue o pipe
-        Il dump sara inviato dai processi con una message queue al processo master che si occupera di stampare il log
-        Il processo master avra un handler che analizera i dump e li stampera
-        Facendo fermare tutti i processi con un semaforo che attende lo 0;

@@ -17,4 +17,6 @@ for id in $IPCS_Q; do
   ipcrm -q $id;
 done
 
-bash kill_pc.sh
+pkill -f porto
+pkill -f nave
+pkill -f master

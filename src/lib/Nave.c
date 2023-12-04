@@ -22,6 +22,8 @@ sig_atomic_t receivedSignal = 0;
 
 sig_atomic_t reportSignal = 0;
 
+sig_atomic_t terminationSignal = 0;
+
 Nave crea_nave(){
     Nave result;
     result.coordinate.longitudine = getRandomDouble(0,SO_LATO);
@@ -261,6 +263,7 @@ void check_scadenza_nave(Nave *nave) {
         for (j = 0; j <SO_MAX_VITA ; j++) {
             if (j==0){
                 merci_scadute += nave->matrice_merce[i][j];
+                nave->statistiche.merci_scadute[i] += nave->matrice_merce[i][j];
                 nave->matrice_merce[i][j] = nave->matrice_merce[i][j+1];
             } else if (j==SO_MAX_VITA-1){
                 nave->matrice_merce[i][j] = 0;
@@ -275,11 +278,7 @@ void check_scadenza_nave(Nave *nave) {
 }
 
 
-void signalHandler(int signum) {
-    if (signum == SIGUSR1) {
-        receivedSignal = 1;
-    }
-}
+
 
 void signalHandlerReport(int signum) {
     if (signum == SIGUSR2) {
@@ -287,29 +286,24 @@ void signalHandlerReport(int signum) {
     }
 }
 
-
-
-
-int main(){
-    Nave nave;
-    int semid = semget(1000, 1,  IPC_EXCL | 0666),msqid = msgget((key_t)1234, IPC_EXCL | 0666), porto_to_go, current_day = 0,i;
-    Porto porto,* portArray;
-    DumpNave dumpNave;
-    DumpReportNave dumpReportNave;
-    signal(SIGUSR1, signalHandler);
-    signal(SIGUSR2, signalHandlerReport);
-    if (semid == -1) {
-        perror("semget porto array in nave");
-        exit(EXIT_FAILURE);
+void terminationHandler(int signum) {
+    if (signum == SIGRTMIN) {
+        terminationSignal = 1;
     }
-    seedRandom();
-    nave = crea_nave();
+}
 
-    while (current_day<=SO_DAYS){
+DumpNave dumpNave = {2,0,0,0};
+int msqid,current_day;
+Nave nave;
+int semid ,  porto_to_go, current_day ,i;
+Porto porto,* portArray;
+DumpReportNave dumpReportNave;
+
+void signalHandlerDump(int signum) {
+    if (signum == SIGUSR1&&terminationSignal==0) {
+
         if (current_day==0){
-            while (!receivedSignal) {
-                pause();
-            }
+
             dumpNave.mtype = 2;
             dumpNave.stato = nave.stato;
             dumpNave.merce_a_bordo = sum_merce_(nave.matrice_merce);
@@ -320,46 +314,57 @@ int main(){
                 exit(EXIT_FAILURE);
             }
 
+
         } else{
-            while (!receivedSignal) {
-                pause();
-            }
+            struct timespec start, end;
             check_scadenza_nave(&nave);
-            take_sem(semid);
-            portArray = shmat(port_array_attach(), NULL, 0);
-            porto_to_go = chose_port(portArray,nave);
-            if (porto_to_go==-1){
-                receivedSignal = 0;
+            if (clock_gettime(CLOCK_REALTIME, &start) == -1) {
+                perror("clock_gettime");
+                exit(1);
+            }
+
+            if (clock_gettime(CLOCK_REALTIME, &end) == -1) {
+                perror("clock_gettime");
+                exit(1);
+            }
+
+            while((end.tv_sec - start.tv_sec < 1)&&!receivedSignal) {
+                take_sem(semid);
+                portArray = shmat(port_array_attach(), NULL, 0);
+                porto_to_go = chose_port(portArray,nave);
+                if (porto_to_go==-1){
+                    receivedSignal = 0;
+                    shmdt(portArray);
+                    release_sem(semid);
+                    if (clock_gettime(CLOCK_REALTIME, &end) == -1) {
+                        perror("clock_gettime");
+                        exit(1);
+                    }
+                    continue;
+                }
+
+                porto = portArray[porto_to_go];
+                take_sem_banc(porto.sem_id);
+                nave.stato = 2;
+                sposta_nave(&nave, porto);
+                negozia_scarica(&porto, &nave);
+                dumpNave.stato = 0;
+                portArray[porto_to_go] = porto;
+                release_sem_banc(porto.sem_id);
                 shmdt(portArray);
                 release_sem(semid);
-                current_day++;
-                dumpNave.mtype = 2;
-                dumpNave.stato = nave.stato;
-                dumpNave.merce_a_bordo = sum_merce_(nave.matrice_merce);
-                dumpNave.merce_scaduta = nave.statistiche.merci_perdute;
-                if (msgsnd(msqid, &dumpNave, sizeof(DumpNave), 0) == -1) {
-                    perror("msgsnd");
-                    printf("%d\n",errno);
-                    exit(EXIT_FAILURE);
+                if (clock_gettime(CLOCK_REALTIME, &end) == -1) {
+                    perror("clock_gettime");
+                    exit(1);
                 }
-                continue;
             }
-
-
-            porto = portArray[porto_to_go];
-            take_sem_banc(porto.sem_id);
-            nave.stato = 2;
-            sposta_nave(&nave, porto);
-            negozia_scarica(&porto, &nave);
-            portArray[porto_to_go] = porto;
-            release_sem_banc(porto.sem_id);
             if (sum_merce_(nave.matrice_merce) > 0) {
                 nave.stato = 1;
+                dumpNave.stato = 1;
             } else {
                 nave.stato = 0;
+                dumpNave.stato = 0;
             }
-            shmdt(portArray);
-            release_sem(semid);
             dumpNave.mtype = 2;
             dumpNave.stato = nave.stato;
             dumpNave.merce_a_bordo = sum_merce_(nave.matrice_merce);
@@ -371,25 +376,63 @@ int main(){
             }
 
         }
-        receivedSignal = 0;
         current_day++;
 
+    }
+    else{
+        reportSignal = 1;
+    }
+}
+
+int main(){
+    semid = semget(1000, 1,  IPC_EXCL | 0666), current_day = 0;
 
 
+    msqid= msgget((key_t)1234, IPC_EXCL | 0666);
+    signal(SIGUSR2, signalHandlerReport);
+    signal(SIGRTMIN,terminationHandler);
+    signal(SIGUSR1, signalHandlerDump);
+    if (semid == -1) {
+        perror("semget porto array in nave");
+        exit(EXIT_FAILURE);
+    }
+    seedRandom();
+
+
+
+
+    while(!reportSignal){
+        struct timespec delay;
+        delay.tv_sec = 0;
+        delay.tv_nsec = 500000000L;
+
+        nanosleep(&delay, NULL);
     }
 
-    while (!reportSignal) {
-        pause();
+    check_scadenza_nave(&nave);
+    if (sum_merce_(nave.matrice_merce) > 0) {
+        nave.stato = 1;
+        dumpNave.stato = 1;
+    } else {
+        nave.stato = 0;
+        dumpNave.stato = 0;
+    }
+    dumpNave.mtype = 2;
+    dumpNave.stato = nave.stato;
+    dumpNave.merce_a_bordo = sum_merce_(nave.matrice_merce);
+    dumpNave.merce_scaduta = nave.statistiche.merci_perdute;
+    if (msgsnd(msqid, &dumpNave, sizeof(DumpNave), 0) == -1) {
+        perror("msgsnd");
+        printf("%d\n",errno);
+        exit(EXIT_FAILURE);
     }
 
     dumpReportNave.mtype = 4;
     for (i=0;i<SO_MERCI;i++){
-        dumpReportNave.merce_scaduta[i] = porto.statistiche.merci_scadute[i];
+        dumpReportNave.merce_scaduta[i] =nave.statistiche.merci_scadute[i];
     }
-    if(msgsnd(msqid, &dumpReportNave, sizeof(DumpReportNave), 0) == -1) {
-        perror("msgsnd");
-        printf("%d\n",errno);
-        exit(EXIT_FAILURE);
+    if(msgsnd(msqid, &dumpReportNave, sizeof(DumpReportNave), 0) != -1) {
+        exit(EXIT_SUCCESS);
     }
 
     return 0;
